@@ -3,14 +3,15 @@ import { create } from "zustand";
 import type { ThemePreference } from "@/types/settings";
 
 /** Mirrors the resolved preference so `index.html` can avoid a flash of the wrong theme. */
-const STORAGE_KEY = "llama-control.theme";
+const STORAGE_KEY = "llamapilot.theme";
+const LEGACY_STORAGE_KEY = "llama-control.theme";
 
 function readInitialPreference(): ThemePreference {
   if (typeof localStorage === "undefined") {
     return "system";
   }
 
-  const stored = localStorage.getItem(STORAGE_KEY);
+  const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
   return stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
 }
 

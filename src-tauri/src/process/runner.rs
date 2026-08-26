@@ -275,7 +275,7 @@ mod tests {
 
     #[tokio::test]
     async fn missing_programs_report_a_dedicated_error_code() {
-        let spec = CommandSpec::new("llama-control-definitely-missing-binary");
+        let spec = CommandSpec::new("llamapilot-definitely-missing-binary");
         let error = capture(&spec).await.expect_err("must fail");
 
         assert_eq!(error.code, ErrorCode::ProcessNotFound);

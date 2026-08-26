@@ -1,7 +1,7 @@
 # Captures a screenshot of the running app window so UI changes can be reviewed without a
 # human in the loop. Development helper only; not part of the application.
 param(
-    [string]$ProcessName = "llama-control",
+    [string]$ProcessName = "llamapilot",
     [Parameter(Mandatory = $true)][string]$OutputPath
 )
 

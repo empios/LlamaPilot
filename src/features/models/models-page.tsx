@@ -136,7 +136,7 @@ export function ModelsPage() {
               </EmptyMedia>
               <EmptyTitle>Add a folder containing GGUF files</EmptyTitle>
               <EmptyDescription>
-                Llama Control will scan it recursively and keep parsed metadata in a small cache.
+                LlamaPilot will scan it recursively and keep parsed metadata in a small cache.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>

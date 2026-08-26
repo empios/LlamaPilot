@@ -32,5 +32,5 @@ pub fn run() {
         })
         .invoke_handler(generated_command_handler!())
         .run(tauri::generate_context!())
-        .expect("error while running Llama Control");
+        .expect("error while running LlamaPilot");
 }

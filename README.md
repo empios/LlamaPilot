@@ -2,7 +2,7 @@
   <img src="src-tauri/icons/128x128.png" width="96" height="96" alt="LlamaPilot app icon" />
 </p>
 
-<h1 align="center">Llama Control</h1>
+<h1 align="center">LlamaPilot</h1>
 
 <p align="center">
   Build, version, inspect, and run your own <code>llama.cpp</code> servers from one native Windows app.
@@ -16,7 +16,7 @@
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green" />
 </p>
 
-Llama Control is a Windows-first desktop control panel for upstream
+LlamaPilot is a Windows-first desktop control panel for upstream
 [llama.cpp](https://github.com/ggml-org/llama.cpp). It manages the whole local serving workflow
 without hiding the tools underneath: clone a source, build `llama-server`, keep immutable runtime
 snapshots, discover what each binary supports, create launch profiles, and monitor the running
@@ -25,9 +25,21 @@ server.
 It is deliberately **not a chat client** and **not another inference backend**. The process doing
 the work is your own `llama-server.exe`, built from the source and revision you choose.
 
-## Why Llama Control?
+<p align="center">
+  <a href="docs/images/dashboard.png">
+    <img src="docs/images/dashboard.png" alt="LlamaPilot dashboard showing llama.cpp source, runtime, model, and hardware status" />
+  </a>
+</p>
 
-| Without it | With Llama Control |
+## Screenshots
+
+| Build and version llama.cpp | Create precise launch profiles |
+| --- | --- |
+| [![LlamaPilot build screen](docs/images/build.png)](docs/images/build.png) | [![LlamaPilot profiles screen](docs/images/profiles.png)](docs/images/profiles.png) |
+
+## Why LlamaPilot?
+
+| Without it | With LlamaPilot |
 | --- | --- |
 | Long command lines copied between text files | Named, persistent launch profiles with exact previews |
 | Rebuilding over the last working binary | Immutable runtime snapshots that safely coexist |
@@ -59,20 +71,20 @@ the work is your own `llama-server.exe`, built from the source and revision you 
 
 ### Install
 
-Download the latest Windows installer from the repository's **Releases** page:
+Download the installer from the [latest LlamaPilot release](https://github.com/empios/LlamaPilot/releases/latest):
 
-- `Llama Control_<version>_x64-setup.exe` — recommended interactive installer
-- `Llama Control_<version>_x64_en-US.msi` — MSI package for managed environments
+- `LlamaPilot_<version>_x64-setup.exe` — recommended interactive installer
+- `LlamaPilot_<version>_x64_en-US.msi` — MSI package for managed environments
 
-Release builds must be code-signed by the distributor. Locally built, unsigned packages may
-trigger a Microsoft Defender SmartScreen warning.
+Packages are currently unsigned, so Microsoft Defender SmartScreen may show a warning. Verify that
+the download comes from `github.com/empios/LlamaPilot/releases` before running it.
 
 ### First server
 
 1. Open **Settings** and add one or more directories containing `.gguf` models.
 2. Open **Runtimes** and clone upstream llama.cpp or register an existing working copy.
 3. Open **Build**, choose CPU or CUDA, and build `llama-server`.
-4. Inspect the new runtime so Llama Control can discover its exact command surface.
+4. Inspect the new runtime so LlamaPilot can discover its exact command surface.
 5. Open **Models**, verify the model and optional multimodal projector pairing.
 6. Create a **Profile**, review the generated command, and press **Start**.
 7. Watch readiness, slots, throughput, and untouched output on **Dashboard** and **Logs**.
@@ -115,8 +127,8 @@ reactive control surface rather than a privileged shell.
 ### Development
 
 ```powershell
-git clone <your-fork-or-this-repository>
-cd llama-control
+git clone https://github.com/empios/LlamaPilot.git
+cd LlamaPilot
 npm install
 npm run tauri dev
 ```
@@ -139,6 +151,9 @@ npm run tauri build
 
 The final command creates both NSIS and MSI packages under
 `src-tauri/target/release/bundle/`.
+
+Version tags matching `v*` run the Windows release workflow, which builds both installers and
+publishes them to GitHub Releases.
 
 ## Project status
 

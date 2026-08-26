@@ -153,7 +153,7 @@ function UninspectedState({
       <div className="max-w-md space-y-1">
         <p className="font-medium">This older runtime has not been inspected</p>
         <p className="text-sm text-muted-foreground">
-          Llama Control will ask it for its version, supported options, and
+          LlamaPilot will ask it for its version, supported options, and
           available devices, then keep the original output with the runtime.
         </p>
       </div>

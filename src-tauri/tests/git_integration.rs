@@ -6,16 +6,16 @@
 
 use std::path::Path;
 
-use llama_control_lib::error::ErrorCode;
-use llama_control_lib::git::{
+use llamapilot_lib::error::ErrorCode;
+use llamapilot_lib::git::{
     clone_repository, discover_default_branch, Git, RefCheckout, Repository,
 };
-use llama_control_lib::process::{CommandSpec, OutputLine};
+use llamapilot_lib::process::{CommandSpec, OutputLine};
 use tokio::sync::mpsc;
 
 const IDENTITY: [&str; 4] = [
     "-c",
-    "user.name=Llama Control Tests",
+    "user.name=LlamaPilot Tests",
     "-c",
     "user.email=tests@example.invalid",
 ];
@@ -34,7 +34,7 @@ async fn run_git(directory: &Path, args: &[&str]) -> String {
         .current_dir(directory)
         .env("GIT_TERMINAL_PROMPT", "0");
 
-    let output = llama_control_lib::process::capture(&spec)
+    let output = llamapilot_lib::process::capture(&spec)
         .await
         .expect("git should be runnable");
 

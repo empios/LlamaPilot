@@ -1,6 +1,6 @@
 # Scrolls the app window at a given point. Development helper only; not part of the application.
 param(
-    [string]$ProcessName = "llama-control",
+    [string]$ProcessName = "llamapilot",
     [Parameter(Mandatory = $true)][int]$X,
     [Parameter(Mandatory = $true)][int]$Y,
     # Negative scrolls down, positive scrolls up, in notches.

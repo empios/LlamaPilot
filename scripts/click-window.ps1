@@ -1,7 +1,7 @@
 # Clicks a point inside the app window, addressed in window-relative pixels so coordinates can
 # be read straight off a capture. Development helper only; not part of the application.
 param(
-    [string]$ProcessName = "llama-control",
+    [string]$ProcessName = "llamapilot",
     [Parameter(Mandatory = $true)][int]$X,
     [Parameter(Mandatory = $true)][int]$Y
 )

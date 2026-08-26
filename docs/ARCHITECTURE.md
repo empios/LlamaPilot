@@ -1,6 +1,6 @@
 # Architecture
 
-Llama Control is a Windows-first desktop control panel for upstream `llama.cpp`. It manages
+LlamaPilot is a Windows-first desktop control panel for upstream `llama.cpp`. It manages
 llama.cpp Git sources, builds `llama-server` binaries, snapshots them into immutable runtimes,
 discovers what each runtime supports, and launches/monitors the server process.
 
@@ -131,7 +131,8 @@ behind an expander and never discards it.
 
 Plain JSON files under the Tauri app-data directory, written atomically (temp file + rename) so
 a crash mid-write cannot corrupt state. Tauri resolves that directory from the bundle
-identifier, so on Windows it is `%APPDATA%\com.llamacontrol.app`:
+identifier, so on Windows it is `%APPDATA%\com.llamacontrol.app`. This legacy identifier remains
+stable across the LlamaPilot rename so existing installations keep their settings and runtime data:
 
 ```
 %APPDATA%/<bundle identifier>/

@@ -14,11 +14,11 @@ pub struct LoggingHandle {
 ///
 /// Returns `None` when a subscriber is already installed, which happens in tests.
 pub fn install(logs_directory: &Path) -> Option<LoggingHandle> {
-    let appender = tracing_appender::rolling::daily(logs_directory, "llama-control.log");
+    let appender = tracing_appender::rolling::daily(logs_directory, "llamapilot.log");
     let (writer, guard) = tracing_appender::non_blocking(appender);
 
-    let filter = EnvFilter::try_from_env("LLAMA_CONTROL_LOG")
-        .unwrap_or_else(|_| EnvFilter::new("info,llama_control_lib=debug"));
+    let filter = EnvFilter::try_from_env("LLAMAPILOT_LOG")
+        .unwrap_or_else(|_| EnvFilter::new("info,llamapilot_lib=debug"));
 
     let installed = tracing_subscriber::registry()
         .with(filter)

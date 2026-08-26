@@ -1,6 +1,6 @@
 # llama.cpp Integration
 
-This document records how Llama Control interacts with upstream `llama.cpp`, and which upstream
+This document records how LlamaPilot interacts with upstream `llama.cpp`, and which upstream
 facts were verified rather than assumed. Verified against `ggml-org/llama.cpp` `master`
 (checked 2026-08-25): `README.md`, `docs/build.md`, `docs/speculative.md`, `docs/multi-gpu.md`,
 `tools/server/README.md`, `tools/mtmd/README.md`.

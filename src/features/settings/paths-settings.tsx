@@ -212,7 +212,7 @@ export function PathsSettings({ settings }: { settings: Settings }) {
 
       <Section
         label="Application data"
-        title="Managed by Llama Control"
+        title="Managed by LlamaPilot"
         description="Settings, the source registry, runtimes, and logs."
         icon={DatabaseIcon}
         bodyClassName="p-0"

@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::time::Duration;
 
-use llama_control_lib::platform::ProcessGroup;
+use llamapilot_lib::platform::ProcessGroup;
 use tokio::process::Child;
 use tokio::process::Command;
 

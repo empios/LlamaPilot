@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use llama_control_lib::llama::discovery;
+use llamapilot_lib::llama::discovery;
 
 #[tokio::test]
 async fn interrogates_a_real_process_and_preserves_both_streams() {
