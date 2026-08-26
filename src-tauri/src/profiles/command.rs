@@ -357,6 +357,20 @@ mod tests {
                 Some("flashAttention"),
                 "",
             ),
+            option(
+                "--spec-type",
+                &["--spec-type"],
+                Some("none,draft-mtp"),
+                Some("speculativeType"),
+                "",
+            ),
+            option(
+                "--spec-draft-model",
+                &["--spec-draft-model", "--model-draft"],
+                Some("FNAME"),
+                Some("draftModel"),
+                "",
+            ),
             option("--future", &["--future"], Some("VALUE"), None, ""),
         ]
         .into_iter()
@@ -367,7 +381,7 @@ mod tests {
             version: "b9000-test".into(),
             commit: Some("deadbeef".into()),
             options,
-            speculative_types: Vec::new(),
+            speculative_types: vec!["none".into(), "draft-mtp".into()],
             devices: Vec::new(),
         }
     }
@@ -479,6 +493,36 @@ mod tests {
                 .code,
             ErrorCode::InvalidProfile
         );
+    }
+
+    #[test]
+    fn emits_an_mtp_drafter_as_a_separate_model_argument() {
+        let draft = tempfile::NamedTempFile::new().expect("draft fixture");
+        let draft_path = draft.path().to_string_lossy().into_owned();
+        let mut input = input();
+        input.options.insert(
+            "speculativeType".into(),
+            ProfileOptionSetting::Custom {
+                value: "draft-mtp".into(),
+            },
+        );
+        input.options.insert(
+            "draftModel".into(),
+            ProfileOptionSetting::Custom {
+                value: draft_path.clone(),
+            },
+        );
+
+        let preview =
+            build_command_preview(input, &runtime(), &capabilities(), &target()).expect("preview");
+        assert!(preview
+            .arguments
+            .windows(2)
+            .any(|pair| pair == ["--spec-type", "draft-mtp"]));
+        assert!(preview
+            .arguments
+            .windows(2)
+            .any(|pair| pair == ["--spec-draft-model", draft_path.as_str()]));
     }
 
     #[test]

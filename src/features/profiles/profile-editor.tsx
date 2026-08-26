@@ -53,7 +53,13 @@ import {
 } from "@/hooks/use-profiles";
 import { backendLabel, type RuntimeRecord } from "@/types/build";
 import type { LlamaCapabilities, LlamaOption } from "@/types/capabilities";
-import type { ModelCatalog, ModelRecord } from "@/types/models";
+import {
+  drafterModelsFor,
+  draftStrategyFor,
+  primaryModels,
+  type ModelCatalog,
+  type ModelRecord,
+} from "@/types/models";
 import {
   createProfileInput,
   profileToInput,
@@ -69,12 +75,14 @@ import {
   KV_KEYS,
   MEMORY_GPU_KEYS,
   MULTI_GPU_KEYS,
+  isExternalDraftStrategy,
   optionChoices,
   selectedSpeculativeTypes,
   SPECULATIVE_KEYS,
   speculativeControlGroups,
   usesBlockDraftStrategy,
 } from "./phase-seven";
+import { applySingleUser131kPreset } from "./profile-presets";
 
 const CORE_FLAGS = new Set([
   "-m",
@@ -104,7 +112,8 @@ export function ProfileEditor({
   onClose: () => void;
 }) {
   const usableRuntime = runtimes.find((runtime) => runtime.capabilities !== null);
-  const usableModel = catalog.models.find((model) => model.complete);
+  const mainModels = primaryModels(catalog.models);
+  const usableModel = mainModels.find((model) => model.complete);
   const [draft, setDraft] = useState<ProfileInput>(() =>
     profile
       ? profileToInput(profile)
@@ -256,7 +265,7 @@ export function ProfileEditor({
                           <SelectValue placeholder="Choose a model" />
                         </SelectTrigger>
                         <SelectContent>
-                          {catalog.models.map((model) => (
+                          {mainModels.map((model) => (
                             <SelectItem key={model.id} value={model.id} disabled={!model.complete}>
                               {model.displayName}
                               {model.complete ? "" : " · incomplete"}
@@ -339,14 +348,44 @@ export function ProfileEditor({
                 ) : optionGroups.general.length === 0 ? (
                   <EmptyOptions text="This runtime exposes no recognised profile options." />
                 ) : (
-                  <ProfileOptionList
-                    options={optionGroups.general}
-                    keyCounts={optionGroups.keyCounts}
-                    draft={draft}
-                    capabilities={capabilities.data!.capabilities}
-                    models={catalog.models}
-                    onChange={(options) => setDraft({ ...draft, options })}
-                  />
+                  <div className="space-y-4">
+                    <div className="rounded-lg border border-primary/35 bg-primary/5 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold">Single-user throughput</p>
+                          <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
+                            Applies one slot, 131K context, full GPU offload, Q4 KV cache,
+                            fixed 512/256 batches, and supported draft/chat tuning. Automatic
+                            memory fitting is disabled; network binding is unchanged.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            const result = applySingleUser131kPreset(
+                              draft.options,
+                              capabilities.data!.capabilities,
+                            );
+                            setDraft({ ...draft, options: result.options });
+                            toast.success(
+                              `Applied ${result.appliedFlags.length} single-user settings.`,
+                            );
+                          }}
+                        >
+                          Apply 131K preset
+                        </Button>
+                      </div>
+                    </div>
+                    <ProfileOptionList
+                      options={optionGroups.general}
+                      keyCounts={optionGroups.keyCounts}
+                      draft={draft}
+                      capabilities={capabilities.data!.capabilities}
+                      models={catalog.models}
+                      onChange={(options) => setDraft({ ...draft, options })}
+                    />
+                  </div>
                 )}
               </TabsContent>
 
@@ -487,7 +526,11 @@ function ProfileOptionList({
             optionKey={key}
             setting={setting}
             capabilities={capabilities}
-            models={models}
+            models={
+              option.knownKey === "draftModel"
+                ? drafterModelsFor(models, draft.modelId)
+                : models
+            }
             onChange={(setting) =>
               onChange(updateProfileOption(draft.options, option, key, setting))
             }
@@ -598,11 +641,47 @@ function SpeculativeControls({
   onChange: (options: Record<string, ProfileOptionSetting>) => void;
 }) {
   const typeOptions = orderedKnownOptions(options, ["speculativeType"]);
+  const draftModelOption = orderedKnownOptions(options, ["draftModel"])[0] ?? null;
   const selectedTypes = selectedSpeculativeTypes(draft.options);
   const groups = speculativeControlGroups(selectedTypes);
+  const directDrafterSupported =
+    capabilities.speculativeTypes.some(isExternalDraftStrategy) &&
+    typeOptions.length > 0 &&
+    draftModelOption !== null;
+  const compatibleDrafters = drafterModelsFor(models, draft.modelId).filter(
+    (model) => draftStrategyFor(model, capabilities.speculativeTypes) !== null,
+  );
+  const draftModelSetting = draftModelOption
+    ? settingForOption(
+        draft.options,
+        draftModelOption,
+        profileOptionKey(draftModelOption, keyCounts),
+      )
+    : { mode: "default" as const };
   const changeSpeculativeOptions = (
     nextOptions: Record<string, ProfileOptionSetting>,
   ) => onChange(pruneInactiveSpeculativeOptions(nextOptions, capabilities));
+  const configureDrafter = (path: string) => {
+    const strategyOption = typeOptions[0];
+    if (!strategyOption || !draftModelOption) return;
+    const model = compatibleDrafters.find((candidate) => candidate.primaryPath === path);
+    if (!model) return;
+    const strategy = draftStrategyFor(model, capabilities.speculativeTypes);
+    if (!strategy) return;
+    let nextOptions = updateProfileOption(
+      draft.options,
+      strategyOption,
+      profileOptionKey(strategyOption, keyCounts),
+      { mode: "custom", value: strategy },
+    );
+    nextOptions = updateProfileOption(
+      nextOptions,
+      draftModelOption,
+      profileOptionKey(draftModelOption, keyCounts),
+      { mode: "custom", value: path },
+    );
+    changeSpeculativeOptions(nextOptions);
+  };
 
   if (typeOptions.length === 0) {
     return <EmptyOptions text="This runtime does not advertise --spec-type." />;
@@ -615,6 +694,30 @@ function SpeculativeControls({
         title="Strategies"
         description="Only strategy names and flags reported by the selected runtime are available."
       />
+      {directDrafterSupported ? (
+        <div className="rounded-lg border border-primary/35 bg-primary/5 p-4">
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold">Drafter model</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Choose the assistant GGUF paired with the primary model. MTP, DFlash, DSpark,
+                and EAGLE3 files automatically select their matching speculative strategy.
+              </p>
+            </div>
+            {selectedTypes.some(isExternalDraftStrategy) &&
+            draftModelSetting.mode === "custom" ? (
+              <Badge>Configured</Badge>
+            ) : (
+              <Badge variant="outline">Optional</Badge>
+            )}
+          </div>
+          <DraftModelSelect
+            models={compatibleDrafters}
+            value={draftModelSetting.mode === "custom" ? draftModelSetting.value : ""}
+            onChange={configureDrafter}
+          />
+        </div>
+      ) : null}
       <ProfileOptionList
         options={typeOptions}
         keyCounts={keyCounts}
@@ -641,7 +744,11 @@ function SpeculativeControls({
       ) : null}
 
       {groups.map((group) => {
-        const groupOptions = orderedKnownOptions(options, group.keys);
+        const groupKeys =
+          directDrafterSupported && selectedTypes.some(isExternalDraftStrategy)
+            ? group.keys.filter((key) => key !== "draftModel")
+            : group.keys;
+        const groupOptions = orderedKnownOptions(options, groupKeys);
         return (
           <section key={group.id} className="space-y-3">
             <div>
@@ -774,23 +881,11 @@ function ProfileOptionControl({
       {!isSwitch && setting.mode === "custom" ? (
         <div className="mt-3">
           {option.knownKey === "draftModel" ? (
-            <Select
-              value={setting.value || undefined}
-              onValueChange={(value) => onChange({ mode: "custom", value })}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose a complete draft model" />
-              </SelectTrigger>
-              <SelectContent>
-                {models
-                  .filter((model) => model.complete && model.primaryPath)
-                  .map((model) => (
-                    <SelectItem key={model.id} value={model.primaryPath!}>
-                      {model.displayName}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            <DraftModelSelect
+              models={models}
+              value={setting.value}
+              onChange={(value) => onChange({ mode: "custom", value })}
+            />
           ) : choices.length > 0 && !isMultiValue ? (
             <Select
               value={setting.value || undefined}
@@ -838,6 +933,45 @@ function ProfileOptionControl({
       ) : null}
       <span className="sr-only">Profile option key {optionKey}</span>
     </div>
+  );
+}
+
+function DraftModelSelect({
+  models,
+  value,
+  onChange,
+}: {
+  models: ModelRecord[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const savedModelIsVisible = models.some((model) => model.primaryPath === value);
+
+  if (models.length === 0 && !value) {
+    return (
+      <div className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
+        No compatible drafter was detected for the selected primary model. Add its GGUF file to a configured model folder and scan again.
+      </div>
+    );
+  }
+
+  return (
+    <Select value={value || undefined} onValueChange={onChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Choose a compatible drafter" />
+      </SelectTrigger>
+      <SelectContent>
+        {value && !savedModelIsVisible ? (
+          <SelectItem value={value}>Saved draft file</SelectItem>
+        ) : null}
+        {models.map((model) => (
+          <SelectItem key={model.id} value={model.primaryPath!}>
+            {model.displayName}
+            {model.metadata.architecture ? ` · ${model.metadata.architecture}` : ""}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 

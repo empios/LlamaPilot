@@ -140,6 +140,21 @@ pub(crate) fn prepare_profile(
     })?;
     let capabilities = artifacts::load(&runtime.directory, &summary.inspection_id)?.capabilities;
 
+    if catalog
+        .models
+        .iter()
+        .find(|model| model.id == input.model_id)
+        .is_some_and(|model| model.is_drafter())
+    {
+        return Err(AppError::new(
+            ErrorCode::InvalidProfile,
+            "A drafter cannot be used as the primary model.",
+        )
+        .with_hint(
+            "Choose the full model on the Profile tab and attach this file on the Speculative tab.",
+        ));
+    }
+
     let target =
         if let Some(existing) = existing.filter(|profile| profile.model_id == input.model_id) {
             require_file(&existing.model_path, "The profile's pinned model")?;

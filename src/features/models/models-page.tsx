@@ -1,5 +1,6 @@
 import {
   AlertTriangleIcon,
+  BotIcon,
   FolderOpenIcon,
   ImageIcon,
   LayersIcon,
@@ -36,7 +37,11 @@ import { formatBytes, formatTimestamp, pluralize } from "@/lib/format";
 import { ipc } from "@/lib/ipc";
 import { cn } from "@/lib/utils";
 import { useNavigationStore } from "@/stores/navigation-store";
-import type { ModelRecord, ProjectorRecord } from "@/types/models";
+import {
+  primaryModels,
+  type ModelRecord,
+  type ProjectorRecord,
+} from "@/types/models";
 
 const AUTOMATIC_VALUE = "__automatic__";
 const DISABLED_VALUE = "__disabled__";
@@ -49,7 +54,10 @@ export function ModelsPage() {
   const navigate = useNavigationStore((state) => state.navigate);
 
   const roots = catalog.data?.roots.length ?? 0;
-  const modelCount = catalog.data?.models.length ?? 0;
+  const models = catalog.data ? primaryModels(catalog.data.models) : [];
+  const drafters = catalog.data?.models.filter((model) => model.role === "drafter") ?? [];
+  const modelCount = models.length;
+  const drafterCount = drafters.length;
   const projectorCount = catalog.data?.projectors.length ?? 0;
 
   return (
@@ -87,6 +95,7 @@ export function ModelsPage() {
         <div className="flex flex-wrap gap-2">
           <StatusChip label="Folders" value={String(roots)} />
           <StatusChip label="Models" value={String(modelCount)} />
+          <StatusChip label="Drafters" value={String(drafterCount)} />
           <StatusChip label="Projectors" value={String(projectorCount)} />
           <StatusChip
             label="Metadata cache"
@@ -151,15 +160,15 @@ export function ModelsPage() {
                 <EmptyMedia variant="icon">
                   <PackageIcon />
                 </EmptyMedia>
-                <EmptyTitle>No model GGUF files found</EmptyTitle>
+                <EmptyTitle>No primary model GGUF files found</EmptyTitle>
                 <EmptyDescription>
-                  The configured folders were scanned. Check the folders or scan report above.
+                  The configured folders were scanned. Drafters and projectors are listed separately.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (
             <ul className="divide-y divide-border">
-              {catalog.data.models.map((model) => (
+              {models.map((model) => (
                 <ModelRow
                   key={model.id}
                   model={model}
@@ -181,6 +190,22 @@ export function ModelsPage() {
               ))}
             </ul>
           )}
+        </Section>
+      ) : null}
+
+      {catalog.data && drafterCount > 0 ? (
+        <Section
+          label="Speculative"
+          title={`${drafterCount} detected ${pluralize(drafterCount, "drafter")}`}
+          description="Assistant and MTP GGUF files are kept out of the primary-model list and offered on a profile's Speculative tab."
+          icon={BotIcon}
+          bodyClassName="p-0"
+        >
+          <ul className="divide-y divide-border">
+            {drafters.map((drafter) => (
+              <DrafterRow key={drafter.id} drafter={drafter} />
+            ))}
+          </ul>
         </Section>
       ) : null}
 
@@ -230,6 +255,46 @@ export function ModelsPage() {
         </Section>
       ) : null}
     </div>
+  );
+}
+
+function DrafterRow({ drafter }: { drafter: ModelRecord }) {
+  return (
+    <li className="flex items-center justify-between gap-4 px-4 py-3">
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="truncate text-sm font-medium">{drafter.displayName}</span>
+          <Badge variant="secondary">Drafter</Badge>
+          {drafter.metadata.architecture ? (
+            <Badge variant="outline">{drafter.metadata.architecture}</Badge>
+          ) : null}
+          {drafter.metadata.sizeLabel ? (
+            <Badge variant="outline">{drafter.metadata.sizeLabel}</Badge>
+          ) : null}
+        </span>
+        <code className="truncate font-mono text-xs text-muted-foreground">
+          {drafter.primaryPath ?? drafter.directory}
+        </code>
+        <span className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+          <span>{formatBytes(drafter.totalSizeBytes)}</span>
+          {drafter.metadata.blockCount ? <span>{drafter.metadata.blockCount} blocks</span> : null}
+          {drafter.metadata.tokenizerModel ? (
+            <span>{drafter.metadata.tokenizerModel} tokenizer</span>
+          ) : null}
+        </span>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={!drafter.primaryPath}
+        onClick={() => {
+          if (drafter.primaryPath) void ipc.revealPath(drafter.primaryPath);
+        }}
+      >
+        <FolderOpenIcon data-icon="inline-start" />
+        Show file
+      </Button>
+    </li>
   );
 }
 

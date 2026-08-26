@@ -63,9 +63,14 @@ export const MULTI_GPU_KEYS = [
 const EXTERNAL_DRAFT_TYPES = new Set([
   "draft-simple",
   "draft-eagle3",
+  "draft-mtp",
   "draft-dflash",
   "draft-dspark",
 ]);
+
+export function isExternalDraftStrategy(strategy: string): boolean {
+  return EXTERNAL_DRAFT_TYPES.has(strategy);
+}
 
 export interface SpeculativeControlGroup {
   id: string;

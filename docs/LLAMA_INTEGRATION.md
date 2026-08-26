@@ -252,6 +252,12 @@ Grouping uses the canonical five-digit `-00001-of-00004` suffix and cross-checks
 an incomplete logical model, but only an existing shard 1 is exposed as `primaryPath` for later
 command generation.
 
+Draft/assistant GGUF files are catalogued with a separate `drafter` role instead of being offered
+as primary models. Architecture metadata ending in `-assistant`/`_assistant` is authoritative;
+well-known MTP, EAGLE3, DFlash, and DSpark filename markers keep older artifacts discoverable. The
+profile editor prefers drafters whose base architecture matches the selected primary model (for
+example `gemma4` with `gemma4-assistant`).
+
 Multimodal projectors (`mmproj`, see `tools/mtmd/README.md`) are detected and paired with their
 model when the pairing is unambiguous; the pairing is always overridable and never applied to an
 obviously incompatible model. The corresponding server flags are `-mm/--mmproj`,
@@ -317,8 +323,14 @@ The profile editor separates general flags from two capability-filtered speciali
 - **Speculative** starts with the runtime's own `--spec-type` list. Selecting a strategy reveals
   only that strategy's controls: external draft-model placement/cache, common draft thresholds,
   or the independent `ngram-simple`, `ngram-map-k`, `ngram-map-k4v`, and `ngram-mod` fields.
+  `draft-mtp` is treated as an external-drafter strategy and exposes `--spec-draft-model` just like
+  the other external draft strategies.
   Selecting `none` clears the other selections, and switching strategies removes now-hidden
   incompatible overrides from the draft profile.
+- **Single-user throughput** is an explicit 131K preset rather than an implicit default. It requests
+  one server slot, full main/draft GPU offload, Q4 K/V cache, fixed 512/256 batch sizes, disables
+  automatic fitting, and applies the supported chat, reasoning, sampling, and draft-length flags.
+  Unsupported flags are skipped, and network binding is deliberately left unchanged.
 
 Cache type choices are parsed from each binary's `allowed values:` help text. Split-mode choices,
 device ids, and speculative type names likewise come from the capability manifest. A newer app

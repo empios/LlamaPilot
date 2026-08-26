@@ -61,4 +61,13 @@ describe("phase seven profile helpers", () => {
       (key) => key === "specDraftMaxTokens",
     )).toHaveLength(1);
   });
+
+  it("treats MTP as an external draft-model strategy", () => {
+    const groups = speculativeControlGroups(["draft-mtp"]);
+    expect(groups.map((group) => group.id)).toEqual([
+      "draft-model",
+      "draft-tuning",
+    ]);
+    expect(groups[0]?.keys).toContain("draftModel");
+  });
 });

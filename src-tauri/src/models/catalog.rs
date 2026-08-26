@@ -32,6 +32,7 @@ pub struct ModelCatalog {
 pub struct ModelRecord {
     pub id: String,
     pub display_name: String,
+    pub role: ModelRole,
     /// The first shard. This is the only path that may later be passed to `llama-server -m`.
     pub primary_path: Option<PathBuf>,
     pub directory: PathBuf,
@@ -44,6 +45,19 @@ pub struct ModelRecord {
     pub projector_status: ProjectorStatus,
     pub projector_id: Option<String>,
     pub projector_candidates: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ModelRole {
+    Main,
+    Drafter,
+}
+
+impl ModelRecord {
+    pub fn is_drafter(&self) -> bool {
+        self.role == ModelRole::Drafter
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -569,6 +583,7 @@ fn group_models(files: Vec<ParsedFile>, issues: &mut Vec<ModelScanIssue>) -> Vec
             ModelRecord {
                 id: group.id,
                 display_name,
+                role: classify_model_role(&metadata, &group.display_fallback),
                 primary_path,
                 directory: group.directory,
                 shards,
@@ -591,7 +606,7 @@ fn pair_projectors(
     overrides: &ModelOverrides,
     issues: &mut Vec<ModelScanIssue>,
 ) {
-    for model in models {
+    for model in models.iter_mut().filter(|model| !model.is_drafter()) {
         if let Some(selection) = overrides.projectors.get(&model.id) {
             match selection {
                 ProjectorOverride::Disabled => {
@@ -639,6 +654,34 @@ fn pair_projectors(
             [] => model.projector_status = ProjectorStatus::None,
             _ => model.projector_status = ProjectorStatus::Ambiguous,
         }
+    }
+}
+
+fn classify_model_role(metadata: &GgufMetadata, filename: &str) -> ModelRole {
+    if metadata
+        .architecture
+        .as_deref()
+        .is_some_and(|architecture| {
+            let architecture = architecture.to_ascii_lowercase();
+            architecture.ends_with("-assistant") || architecture.ends_with("_assistant")
+        })
+    {
+        return ModelRole::Drafter;
+    }
+
+    let filename = filename.to_ascii_lowercase();
+    if filename.starts_with("mtp-")
+        || filename.starts_with("draft-")
+        || filename.starts_with("drafter-")
+        || filename.contains("-drafter-")
+        || filename.contains("dflash")
+        || filename.contains("dspark")
+        || filename.contains("eagle3")
+        || filename.contains("eagle-3")
+    {
+        ModelRole::Drafter
+    } else {
+        ModelRole::Main
     }
 }
 
@@ -815,6 +858,7 @@ mod tests {
         let service = service(&temp);
         let first = service.scan(&[temp.path().to_path_buf()]).expect("scan");
         assert_eq!(first.models.len(), 1);
+        assert_eq!(first.models[0].role, ModelRole::Main);
         assert_eq!(first.models[0].shards.len(), 2);
         assert_eq!(first.models[0].expected_shards, 2);
         assert!(first.models[0].complete);
@@ -831,6 +875,45 @@ mod tests {
         let second = service.scan(&[temp.path().to_path_buf()]).expect("rescan");
         assert_eq!(second.cache_hits, 3);
         assert_eq!(second.cache_misses, 1);
+    }
+
+    #[test]
+    fn classifies_assistant_architectures_as_drafters() {
+        let temp = tempfile::tempdir().expect("temp directory");
+        write_gguf(
+            &temp.path().join("mtp-gemma-4-31b.gguf"),
+            &[
+                ("general.type", "model"),
+                ("general.name", "31B Assistant"),
+                ("general.architecture", "gemma4-assistant"),
+            ],
+        );
+
+        let catalog = service(&temp)
+            .scan(&[temp.path().to_path_buf()])
+            .expect("scan");
+        assert_eq!(catalog.models.len(), 1);
+        assert_eq!(catalog.models[0].role, ModelRole::Drafter);
+        assert_eq!(catalog.models[0].projector_status, ProjectorStatus::None);
+    }
+
+    #[test]
+    fn classifies_named_dflash_models_as_drafters() {
+        let temp = tempfile::tempdir().expect("temp directory");
+        write_gguf(
+            &temp.path().join("DFlash-Gemma-4-31B.gguf"),
+            &[
+                ("general.type", "model"),
+                ("general.name", "Gemma 4 speculative model"),
+                ("general.architecture", "gemma4"),
+            ],
+        );
+
+        let catalog = service(&temp)
+            .scan(&[temp.path().to_path_buf()])
+            .expect("scan");
+        assert_eq!(catalog.models.len(), 1);
+        assert_eq!(catalog.models[0].role, ModelRole::Drafter);
     }
 
     #[test]

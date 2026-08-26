@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { modelCatalogSchema } from "@/types/models";
+import {
+  drafterModelsFor,
+  draftStrategyFor,
+  modelCatalogSchema,
+} from "@/types/models";
 
 const metadata = {
   version: 3,
@@ -33,6 +37,7 @@ const catalog = {
     {
       id: "E:\\models\\tiny.gguf",
       displayName: "Tiny",
+      role: "main",
       primaryPath: "E:\\models\\tiny-00001-of-00002.gguf",
       directory: "E:\\models",
       shards: [
@@ -69,5 +74,42 @@ describe("model catalog schema", () => {
     const invalid = structuredClone(catalog);
     invalid.models[0]!.projectorStatus = "guessed";
     expect(modelCatalogSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it("rejects model roles not understood by the UI", () => {
+    const invalid = structuredClone(catalog);
+    invalid.models[0]!.role = "assistant";
+    expect(modelCatalogSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it("offers an assistant architecture only as a compatible drafter", () => {
+    const main = modelCatalogSchema.parse(catalog).models[0]!;
+    main.complete = true;
+    main.metadata.architecture = "gemma4";
+    const drafter = structuredClone(main);
+    drafter.id = "E:\\models\\mtp-gemma4.gguf";
+    drafter.primaryPath = drafter.id;
+    drafter.displayName = "31B Assistant";
+    drafter.role = "drafter";
+    drafter.metadata.architecture = "gemma4-assistant";
+    const unrelated = structuredClone(drafter);
+    unrelated.id = "E:\\models\\draft-llama.gguf";
+    unrelated.primaryPath = unrelated.id;
+    unrelated.metadata.architecture = "llama-assistant";
+
+    expect(drafterModelsFor([main, unrelated, drafter], main.id)).toEqual([drafter]);
+  });
+
+  it("chooses the runtime strategy matching a recognized drafter", () => {
+    const drafter = modelCatalogSchema.parse(catalog).models[0]!;
+    drafter.complete = true;
+    drafter.role = "drafter";
+    drafter.primaryPath = "E:\\models\\gemma-4-31b-dflash.gguf";
+    drafter.displayName = "Gemma 4 DFlash";
+
+    expect(
+      draftStrategyFor(drafter, ["none", "draft-mtp", "draft-dflash"]),
+    ).toBe("draft-dflash");
+    expect(draftStrategyFor(drafter, ["none", "draft-mtp"])).toBeNull();
   });
 });

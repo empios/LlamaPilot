@@ -10,6 +10,7 @@ const NON_QUANTIZED_CACHE_TYPES: &[&str] = &["f32", "f16", "bf16"];
 const EXTERNAL_DRAFT_TYPES: &[&str] = &[
     "draft-simple",
     "draft-eagle3",
+    "draft-mtp",
     "draft-dflash",
     "draft-dspark",
 ];
@@ -297,7 +298,7 @@ fn validate_speculative(
             input,
             capabilities,
             &external_keys,
-            "External draft-model settings require draft-simple, draft-eagle3, draft-dflash, or draft-dspark.",
+            "External draft-model settings require draft-simple, draft-eagle3, draft-mtp, draft-dflash, or draft-dspark.",
         )?;
     }
 
@@ -724,7 +725,7 @@ mod tests {
             option(
                 "--spec-type",
                 &["--spec-type"],
-                Some("none,draft-dflash,ngram-mod"),
+                Some("none,draft-mtp,draft-dflash,ngram-mod"),
                 "speculativeType",
                 "",
             ),
@@ -765,7 +766,12 @@ mod tests {
             version: "test".into(),
             commit: None,
             options,
-            speculative_types: vec!["none".into(), "draft-dflash".into(), "ngram-mod".into()],
+            speculative_types: vec![
+                "none".into(),
+                "draft-mtp".into(),
+                "draft-dflash".into(),
+                "ngram-mod".into(),
+            ],
             devices: vec![
                 LlamaDevice {
                     id: "CUDA0".into(),
@@ -870,6 +876,22 @@ mod tests {
             .options
             .insert("draftModel".into(), custom("missing.gguf"));
         assert!(validate_advanced_options(&input, &capabilities()).is_err());
+    }
+
+    #[test]
+    fn mtp_requires_and_accepts_an_external_draft_model() {
+        let draft = tempfile::NamedTempFile::new().expect("draft fixture");
+        let draft_path = draft.path().to_string_lossy().into_owned();
+        let mut input = input();
+        input
+            .options
+            .insert("speculativeType".into(), custom("draft-mtp"));
+        assert!(validate_advanced_options(&input, &capabilities()).is_err());
+
+        input
+            .options
+            .insert("draftModel".into(), custom(&draft_path));
+        validate_advanced_options(&input, &capabilities()).expect("valid MTP drafter");
     }
 
     #[test]
