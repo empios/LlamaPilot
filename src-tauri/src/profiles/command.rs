@@ -340,6 +340,13 @@ mod tests {
     fn capabilities() -> LlamaCapabilities {
         let options = [
             option("--model", &["-m", "--model"], Some("FNAME"), None, ""),
+            option(
+                "--alias",
+                &["-a", "--alias"],
+                Some("STRING"),
+                Some("modelAlias"),
+                "model names used by the API",
+            ),
             option("--host", &["--host"], Some("HOST"), None, ""),
             option("--port", &["--port"], Some("PORT"), None, ""),
             option("--mmproj", &["-mm", "--mmproj"], Some("FNAME"), None, ""),
@@ -468,6 +475,24 @@ mod tests {
                 "value with spaces",
             ]
         );
+    }
+
+    #[test]
+    fn emits_api_model_aliases_for_client_requests() {
+        let mut input = input();
+        input.options.insert(
+            "modelAlias".into(),
+            ProfileOptionSetting::Custom {
+                value: "qwen-coder,local-coder".into(),
+            },
+        );
+
+        let preview =
+            build_command_preview(input, &runtime(), &capabilities(), &target()).expect("preview");
+        assert!(preview
+            .arguments
+            .windows(2)
+            .any(|pair| pair == ["--alias", "qwen-coder,local-coder"]));
     }
 
     #[test]

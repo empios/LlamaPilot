@@ -372,6 +372,11 @@ mod tests {
         assert_eq!(context.value_hint.as_deref(), Some("N"));
         assert_eq!(context.known_key.as_deref(), Some("contextSize"));
 
+        let alias = options.get("--alias").expect("model alias option");
+        assert_eq!(alias.aliases, ["-a", "--alias"]);
+        assert_eq!(alias.known_key.as_deref(), Some("modelAlias"));
+        assert_eq!(alias.display_name, "API model aliases");
+
         let device = options.get("--device").expect("device option");
         assert!(device.description.contains("use --list-devices"));
 

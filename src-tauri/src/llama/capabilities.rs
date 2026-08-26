@@ -162,6 +162,13 @@ pub struct KnownOptionDefinition {
 /// its flags is actually present in the selected binary's `--help` output.
 pub const KNOWN_OPTIONS: &[KnownOptionDefinition] = &[
     KnownOptionDefinition {
+        key: "modelAlias",
+        label: "API model aliases",
+        summary: "Comma-separated model names exposed to OpenAI-compatible clients such as coding agents.",
+        category: LlamaOptionCategory::Advanced,
+        flags: &["-a", "--alias"],
+    },
+    KnownOptionDefinition {
         key: "contextSize",
         label: "Context size",
         summary: "Maximum context window used by the model.",
@@ -493,6 +500,7 @@ mod tests {
     fn registry_covers_every_specialized_profile_concept() {
         let keys: Vec<_> = KNOWN_OPTIONS.iter().map(|option| option.key).collect();
         for required in [
+            "modelAlias",
             "contextSize",
             "batchSize",
             "microBatchSize",

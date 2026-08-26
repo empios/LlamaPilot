@@ -1,0 +1,54 @@
+# Changelog
+
+Notable changes to LlamaPilot are documented here. The project follows semantic versioning while
+it is practical; before 1.0, minor releases may contain intentional breaking changes to persisted
+development data.
+
+## Unreleased
+
+## 0.2.0 — 2026-08-26
+
+### Added
+
+- A capability-aware API model-alias field for names used by coding agents and other
+  OpenAI-compatible clients.
+- Windows CI for frontend and Rust verification on every pull request and push to `main`.
+- A version-consistency check covering npm, Cargo, Tauri, lockfiles, and release tags.
+- Focused tests for the typed IPC boundary and live server event bridge.
+- An end-to-end managed-serving test covering runtime discovery, GGUF scanning, persisted profiles,
+  command generation, health checks, telemetry, logs, and process shutdown.
+- Component coverage for lazy page navigation, dashboard launch guidance, model onboarding and
+  rescanning, live-log filtering and snapshots, profile option storage, environment editing, and
+  generated command previews.
+- Contributor, security, and release-process documentation.
+- Weekly dependency update checks for npm, Cargo, and GitHub Actions.
+
+### Changed
+
+- Unified user-facing and package branding under the LlamaPilot name.
+- Restricted frontend coverage collection to maintained application source instead of generated
+  Tauri build output.
+- Loaded feature pages on demand and split option controls, specialised Memory/GPU and Speculative
+  panels, and preview panels out of the main profile editor module.
+
+## 0.1.4 — 2026-08-26
+
+### Added
+
+- Drafter-model discovery and compatibility filtering.
+- MTP and external draft-model profile support.
+- A capability-aware single-user 131K throughput preset.
+- Searchable server logs with level and stream filters, raw mode, pause, and follow controls.
+
+## 0.1.1 — 2026-08-26
+
+### Changed
+
+- Refined the initial Windows release after real installer validation.
+
+## 0.1.0 — 2026-08-26
+
+### Added
+
+- Initial Windows release covering source management, builds, immutable runtimes, capability
+  discovery, GGUF models, profiles, server supervision, telemetry, and logs.

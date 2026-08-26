@@ -1,22 +1,9 @@
-import {
-  AlertTriangleIcon,
-  CheckIcon,
-  CopyIcon,
-  CpuIcon,
-  DatabaseIcon,
-  NetworkIcon,
-  PlusIcon,
-  RefreshCwIcon,
-  SlidersHorizontalIcon,
-  SparklesIcon,
-  TrashIcon,
-} from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { CpuIcon, RefreshCwIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { ErrorPanel } from "@/components/error-panel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,18 +39,14 @@ import {
   useUpdateProfile,
 } from "@/hooks/use-profiles";
 import { backendLabel, type RuntimeRecord } from "@/types/build";
-import type { LlamaCapabilities, LlamaOption } from "@/types/capabilities";
+import type { LlamaOption } from "@/types/capabilities";
 import {
-  drafterModelsFor,
-  draftStrategyFor,
   primaryModels,
   type ModelCatalog,
-  type ModelRecord,
 } from "@/types/models";
 import {
   createProfileInput,
   profileToInput,
-  type CommandPreview,
   type LaunchProfile,
   type ProfileInput,
   type ProfileOptionSetting,
@@ -71,17 +54,23 @@ import {
 import type { Settings } from "@/types/settings";
 
 import {
-  isTensorMode,
-  KV_KEYS,
   MEMORY_GPU_KEYS,
-  MULTI_GPU_KEYS,
-  isExternalDraftStrategy,
-  optionChoices,
-  selectedSpeculativeTypes,
   SPECULATIVE_KEYS,
-  speculativeControlGroups,
-  usesBlockDraftStrategy,
 } from "./phase-seven";
+import {
+  ApiModelAliasField,
+  CommandPreviewPanel,
+  EnvironmentEditor,
+} from "./profile-editor-panels";
+import {
+  EmptyOptions,
+  ProfileOptionControl,
+  ProfileOptionList,
+} from "./profile-option-controls";
+import {
+  MemoryGpuControls,
+  SpeculativeControls,
+} from "./profile-specialized-controls";
 import { applySingleUser131kPreset } from "./profile-presets";
 
 const CORE_FLAGS = new Set([
@@ -163,11 +152,13 @@ export function ProfileEditor({
     const speculative = known.filter((option) =>
       SPECULATIVE_KEYS.has(option.knownKey ?? ""),
     );
+    const modelAlias = known.find((option) => option.knownKey === "modelAlias") ?? null;
     const general = known.filter((option) =>
       !MEMORY_GPU_KEYS.has(option.knownKey ?? "") &&
-      !SPECULATIVE_KEYS.has(option.knownKey ?? ""),
+      !SPECULATIVE_KEYS.has(option.knownKey ?? "") &&
+      option.knownKey !== "modelAlias",
     );
-    return { general, memoryGpu, speculative, advanced, keyCounts };
+    return { general, memoryGpu, speculative, modelAlias, advanced, keyCounts };
   }, [capabilities.data]);
 
   const savePending = createProfile.isPending || updateProfile.isPending;
@@ -278,6 +269,15 @@ export function ProfileEditor({
                       </FieldDescription>
                     </Field>
                   </div>
+
+                  {optionGroups.modelAlias ? (
+                    <ApiModelAliasField
+                      option={optionGroups.modelAlias}
+                      keyCounts={optionGroups.keyCounts}
+                      options={draft.options}
+                      onChange={(options) => setDraft({ ...draft, options })}
+                    />
+                  ) : null}
 
                   {selectedRuntime && !selectedRuntime.capabilities ? (
                     <Alert>
@@ -499,690 +499,6 @@ export function ProfileEditor({
   );
 }
 
-function ProfileOptionList({
-  options,
-  keyCounts,
-  draft,
-  capabilities,
-  models,
-  onChange,
-}: {
-  options: LlamaOption[];
-  keyCounts: Map<string, number>;
-  draft: ProfileInput;
-  capabilities: LlamaCapabilities;
-  models: ModelRecord[];
-  onChange: (options: Record<string, ProfileOptionSetting>) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      {options.map((option) => {
-        const key = profileOptionKey(option, keyCounts);
-        const setting = settingForOption(draft.options, option, key);
-        return (
-          <ProfileOptionControl
-            key={option.flag}
-            option={option}
-            optionKey={key}
-            setting={setting}
-            capabilities={capabilities}
-            models={
-              option.knownKey === "draftModel"
-                ? drafterModelsFor(models, draft.modelId)
-                : models
-            }
-            onChange={(setting) =>
-              onChange(updateProfileOption(draft.options, option, key, setting))
-            }
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-function MemoryGpuControls({
-  options,
-  keyCounts,
-  draft,
-  capabilities,
-  models,
-  onChange,
-}: {
-  options: LlamaOption[];
-  keyCounts: Map<string, number>;
-  draft: ProfileInput;
-  capabilities: LlamaCapabilities;
-  models: ModelRecord[];
-  onChange: (options: Record<string, ProfileOptionSetting>) => void;
-}) {
-  const kvOptions = orderedKnownOptions(options, KV_KEYS);
-  const gpuOptions = orderedKnownOptions(options, MULTI_GPU_KEYS);
-
-  if (options.length === 0) {
-    return <EmptyOptions text="This runtime advertises no specialised memory or GPU controls." />;
-  }
-
-  return (
-    <div className="space-y-6">
-      <OptionSectionHeading
-        icon={<DatabaseIcon className="size-4" />}
-        title="KV cache"
-        description="Storage type, accelerator offload, slot sharing, and sliding-window cache policy."
-      />
-      {kvOptions.length > 0 ? (
-        <ProfileOptionList
-          options={kvOptions}
-          keyCounts={keyCounts}
-          draft={draft}
-          capabilities={capabilities}
-          models={models}
-          onChange={onChange}
-        />
-      ) : (
-        <p className="text-xs text-muted-foreground">No KV controls are advertised by this runtime.</p>
-      )}
-
-      <OptionSectionHeading
-        icon={<NetworkIcon className="size-4" />}
-        title="Multi-GPU placement"
-        description="Device order, layer placement, split proportions, and memory fitting."
-      />
-      {isTensorMode(draft.options) ? (
-        <Alert>
-          <AlertTriangleIcon />
-          <AlertTitle>Experimental tensor parallelism</AlertTitle>
-          <AlertDescription>
-            Requires Flash Attention, f32/f16/bf16 KV cache, and a supported model architecture. Automatic fit is unavailable.
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      {capabilities.devices.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {capabilities.devices.map((device) => (
-            <Badge key={device.id} variant="outline">
-              {device.id} · {device.name}
-              {device.memoryFreeMib !== null ? ` · ${device.memoryFreeMib} MiB free` : ""}
-            </Badge>
-          ))}
-        </div>
-      ) : (
-        <p className="text-xs text-muted-foreground">
-          This inspection reported no accelerator devices; controls remain limited to flags the binary advertises.
-        </p>
-      )}
-      {gpuOptions.length > 0 ? (
-        <ProfileOptionList
-          options={gpuOptions}
-          keyCounts={keyCounts}
-          draft={draft}
-          capabilities={capabilities}
-          models={models}
-          onChange={onChange}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function SpeculativeControls({
-  options,
-  keyCounts,
-  draft,
-  capabilities,
-  models,
-  onChange,
-}: {
-  options: LlamaOption[];
-  keyCounts: Map<string, number>;
-  draft: ProfileInput;
-  capabilities: LlamaCapabilities;
-  models: ModelRecord[];
-  onChange: (options: Record<string, ProfileOptionSetting>) => void;
-}) {
-  const typeOptions = orderedKnownOptions(options, ["speculativeType"]);
-  const draftModelOption = orderedKnownOptions(options, ["draftModel"])[0] ?? null;
-  const selectedTypes = selectedSpeculativeTypes(draft.options);
-  const groups = speculativeControlGroups(selectedTypes);
-  const directDrafterSupported =
-    capabilities.speculativeTypes.some(isExternalDraftStrategy) &&
-    typeOptions.length > 0 &&
-    draftModelOption !== null;
-  const compatibleDrafters = drafterModelsFor(models, draft.modelId).filter(
-    (model) => draftStrategyFor(model, capabilities.speculativeTypes) !== null,
-  );
-  const draftModelSetting = draftModelOption
-    ? settingForOption(
-        draft.options,
-        draftModelOption,
-        profileOptionKey(draftModelOption, keyCounts),
-      )
-    : { mode: "default" as const };
-  const changeSpeculativeOptions = (
-    nextOptions: Record<string, ProfileOptionSetting>,
-  ) => onChange(pruneInactiveSpeculativeOptions(nextOptions, capabilities));
-  const configureDrafter = (path: string) => {
-    const strategyOption = typeOptions[0];
-    if (!strategyOption || !draftModelOption) return;
-    const model = compatibleDrafters.find((candidate) => candidate.primaryPath === path);
-    if (!model) return;
-    const strategy = draftStrategyFor(model, capabilities.speculativeTypes);
-    if (!strategy) return;
-    let nextOptions = updateProfileOption(
-      draft.options,
-      strategyOption,
-      profileOptionKey(strategyOption, keyCounts),
-      { mode: "custom", value: strategy },
-    );
-    nextOptions = updateProfileOption(
-      nextOptions,
-      draftModelOption,
-      profileOptionKey(draftModelOption, keyCounts),
-      { mode: "custom", value: path },
-    );
-    changeSpeculativeOptions(nextOptions);
-  };
-
-  if (typeOptions.length === 0) {
-    return <EmptyOptions text="This runtime does not advertise --spec-type." />;
-  }
-
-  return (
-    <div className="space-y-6">
-      <OptionSectionHeading
-        icon={<SparklesIcon className="size-4" />}
-        title="Strategies"
-        description="Only strategy names and flags reported by the selected runtime are available."
-      />
-      {directDrafterSupported ? (
-        <div className="rounded-lg border border-primary/35 bg-primary/5 p-4">
-          <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <p className="text-sm font-semibold">Drafter model</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Choose the assistant GGUF paired with the primary model. MTP, DFlash, DSpark,
-                and EAGLE3 files automatically select their matching speculative strategy.
-              </p>
-            </div>
-            {selectedTypes.some(isExternalDraftStrategy) &&
-            draftModelSetting.mode === "custom" ? (
-              <Badge>Configured</Badge>
-            ) : (
-              <Badge variant="outline">Optional</Badge>
-            )}
-          </div>
-          <DraftModelSelect
-            models={compatibleDrafters}
-            value={draftModelSetting.mode === "custom" ? draftModelSetting.value : ""}
-            onChange={configureDrafter}
-          />
-        </div>
-      ) : null}
-      <ProfileOptionList
-        options={typeOptions}
-        keyCounts={keyCounts}
-        draft={draft}
-        capabilities={capabilities}
-        models={models}
-        onChange={changeSpeculativeOptions}
-      />
-
-      {selectedTypes.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-5 text-center text-sm text-muted-foreground">
-          Choose Custom above and select at least one strategy to reveal its own controls.
-        </div>
-      ) : null}
-
-      {usesBlockDraftStrategy(selectedTypes) ? (
-        <Alert>
-          <AlertTriangleIcon />
-          <AlertTitle>Draft block-size limit</AlertTitle>
-          <AlertDescription>
-            DFlash and DSpark clamp maximum draft tokens to the block size stored in the draft model.
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
-      {groups.map((group) => {
-        const groupKeys =
-          directDrafterSupported && selectedTypes.some(isExternalDraftStrategy)
-            ? group.keys.filter((key) => key !== "draftModel")
-            : group.keys;
-        const groupOptions = orderedKnownOptions(options, groupKeys);
-        return (
-          <section key={group.id} className="space-y-3">
-            <div>
-              <p className="text-sm font-semibold">{group.title}</p>
-              <p className="text-xs text-muted-foreground">{group.description}</p>
-            </div>
-            {groupOptions.length > 0 ? (
-              <ProfileOptionList
-                options={groupOptions}
-                keyCounts={keyCounts}
-                draft={draft}
-                capabilities={capabilities}
-                models={models}
-                onChange={changeSpeculativeOptions}
-              />
-            ) : (
-              <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-                This runtime advertises the strategy but none of its optional tuning flags.
-              </p>
-            )}
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
-function OptionSectionHeading({
-  icon,
-  title,
-  description,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex items-start gap-2">
-      <span className="mt-0.5 text-primary">{icon}</span>
-      <div>
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </div>
-    </div>
-  );
-}
-
-function ProfileOptionControl({
-  option,
-  optionKey,
-  setting,
-  capabilities,
-  models,
-  onChange,
-}: {
-  option: LlamaOption;
-  optionKey: string;
-  setting: ProfileOptionSetting;
-  capabilities: LlamaCapabilities;
-  models: ModelRecord[];
-  onChange: (setting: ProfileOptionSetting) => void;
-}) {
-  const isSwitch = option.valueHint === null;
-  const hasNegative = option.aliases.some((alias) => alias.startsWith("--no-"));
-  const hasPositive = option.aliases.some((alias) => !alias.startsWith("--no-"));
-  const hasPairedSwitches = hasNegative && hasPositive;
-  const mode = isSwitch
-    ? setting.mode === "custom"
-      ? setting.value === "false"
-        ? "disabled"
-        : "enabled"
-      : "default"
-    : setting.mode;
-  const choices = optionChoices(option).filter(
-    (value) => value.toLowerCase() !== "auto",
-  );
-  const isMultiValue = ["speculativeType", "device", "draftDevice"].includes(
-    option.knownKey ?? "",
-  );
-  const isNumeric =
-    option.knownKey?.startsWith("ngram") === true ||
-    option.knownKey?.startsWith("specDraft") === true ||
-    ["mainGpu"].includes(option.knownKey ?? "");
-
-  return (
-    <div className="rounded-lg border border-border p-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium">{option.displayName}</span>
-            <code className="font-mono text-xs text-primary">{option.flag}</code>
-            {option.valueHint ? <Badge variant="outline">{option.valueHint}</Badge> : null}
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {option.summary ?? option.description ?? "No description reported."}
-          </p>
-        </div>
-        <Select
-          value={mode}
-          onValueChange={(nextMode) => {
-            if (nextMode === "default") onChange({ mode: "default" });
-            else if (nextMode === "auto") onChange({ mode: "auto" });
-            else if (nextMode === "enabled") onChange({ mode: "custom", value: "true" });
-            else if (nextMode === "disabled") onChange({ mode: "custom", value: "false" });
-            else onChange({ mode: "custom", value: "" });
-          }}
-        >
-          <SelectTrigger size="sm" className="w-28">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">Default</SelectItem>
-            {isSwitch ? (
-              <>
-                <SelectItem value="enabled">
-                  {hasPairedSwitches ? "Enabled" : "Pass flag"}
-                </SelectItem>
-                {hasPairedSwitches ? <SelectItem value="disabled">Disabled</SelectItem> : null}
-              </>
-            ) : (
-              <>
-                {optionSupportsAuto(option) ? <SelectItem value="auto">Auto</SelectItem> : null}
-                <SelectItem value="custom">Custom</SelectItem>
-              </>
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {!isSwitch && setting.mode === "custom" ? (
-        <div className="mt-3">
-          {option.knownKey === "draftModel" ? (
-            <DraftModelSelect
-              models={models}
-              value={setting.value}
-              onChange={(value) => onChange({ mode: "custom", value })}
-            />
-          ) : choices.length > 0 && !isMultiValue ? (
-            <Select
-              value={setting.value || undefined}
-              onValueChange={(value) => onChange({ mode: "custom", value })}
-            >
-              <SelectTrigger className="w-full font-mono text-xs">
-                <SelectValue placeholder={`Choose ${option.displayName.toLowerCase()}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {choices.map((value) => (
-                  <SelectItem key={value} value={value} className="font-mono text-xs">
-                    {value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              className="font-mono text-xs"
-              type={isNumeric ? "number" : "text"}
-              step={option.knownKey?.includes("Probability") ? "0.01" : undefined}
-              value={setting.value}
-              placeholder={option.valueHint ?? "value"}
-              onChange={(event) =>
-                onChange({ mode: "custom", value: event.currentTarget.value })
-              }
-            />
-          )}
-          {option.knownKey === "speculativeType" && capabilities.speculativeTypes.length > 0 ? (
-            <SuggestionButtons
-              values={capabilities.speculativeTypes}
-              selected={setting.value}
-              exclusiveNone
-              onChange={(value) => onChange({ mode: "custom", value })}
-            />
-          ) : null}
-          {["device", "draftDevice"].includes(option.knownKey ?? "") && capabilities.devices.length > 0 ? (
-            <SuggestionButtons
-              values={capabilities.devices.map((device) => device.id)}
-              selected={setting.value}
-              onChange={(value) => onChange({ mode: "custom", value })}
-            />
-          ) : null}
-        </div>
-      ) : null}
-      <span className="sr-only">Profile option key {optionKey}</span>
-    </div>
-  );
-}
-
-function DraftModelSelect({
-  models,
-  value,
-  onChange,
-}: {
-  models: ModelRecord[];
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const savedModelIsVisible = models.some((model) => model.primaryPath === value);
-
-  if (models.length === 0 && !value) {
-    return (
-      <div className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-        No compatible drafter was detected for the selected primary model. Add its GGUF file to a configured model folder and scan again.
-      </div>
-    );
-  }
-
-  return (
-    <Select value={value || undefined} onValueChange={onChange}>
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder="Choose a compatible drafter" />
-      </SelectTrigger>
-      <SelectContent>
-        {value && !savedModelIsVisible ? (
-          <SelectItem value={value}>Saved draft file</SelectItem>
-        ) : null}
-        {models.map((model) => (
-          <SelectItem key={model.id} value={model.primaryPath!}>
-            {model.displayName}
-            {model.metadata.architecture ? ` · ${model.metadata.architecture}` : ""}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
-function SuggestionButtons({
-  values,
-  selected,
-  exclusiveNone = false,
-  onChange,
-}: {
-  values: string[];
-  selected: string;
-  exclusiveNone?: boolean;
-  onChange: (value: string) => void;
-}) {
-  const selectedValues = new Set(selected.split(",").map((value) => value.trim()).filter(Boolean));
-  return (
-    <div className="mt-2 flex flex-wrap gap-1.5">
-      {values.map((value) => {
-        const active = selectedValues.has(value);
-        return (
-          <Button
-            key={value}
-            type="button"
-            variant={active ? "secondary" : "outline"}
-            size="sm"
-            className="h-6 px-2 font-mono text-[11px]"
-            onClick={() => {
-              if (active) {
-                selectedValues.delete(value);
-              } else if (exclusiveNone && value === "none") {
-                selectedValues.clear();
-                selectedValues.add(value);
-              } else {
-                if (exclusiveNone) selectedValues.delete("none");
-                selectedValues.add(value);
-              }
-              onChange([...selectedValues].join(","));
-            }}
-          >
-            {active ? <CheckIcon data-icon="inline-start" /> : null}
-            {value}
-          </Button>
-        );
-      })}
-    </div>
-  );
-}
-
-function EnvironmentEditor({
-  environment,
-  onChange,
-}: {
-  environment: Record<string, string>;
-  onChange: (environment: Record<string, string>) => void;
-}) {
-  const entries = Object.entries(environment);
-  const addVariable = () => {
-    let index = entries.length + 1;
-    let key = `VARIABLE_${index}`;
-    while (Object.hasOwn(environment, key)) {
-      key = `VARIABLE_${++index}`;
-    }
-    onChange({ ...environment, [key]: "" });
-  };
-
-  return (
-    <FieldGroup>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium">Per-process environment</p>
-          <p className="text-xs text-muted-foreground">
-            These values are attached only to llama-server and never written to the global environment.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={addVariable}>
-          <PlusIcon data-icon="inline-start" />
-          Add variable
-        </Button>
-      </div>
-      {entries.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-5 text-center text-sm text-muted-foreground">
-          No environment overrides.
-        </div>
-      ) : (
-        entries.map(([key, value], index) => (
-          <div key={`${index}-${key}`} className="grid gap-2 md:grid-cols-[minmax(160px,0.7fr)_1fr_auto]">
-            <Input
-              aria-label={`Environment variable ${index + 1} name`}
-              className="font-mono text-xs"
-              value={key}
-              onChange={(event) => {
-                const next = Object.fromEntries(entries.map(([entryKey, entryValue], entryIndex) =>
-                  entryIndex === index ? [event.currentTarget.value, entryValue] : [entryKey, entryValue],
-                ));
-                onChange(next);
-              }}
-            />
-            <Input
-              aria-label={`Environment variable ${key} value`}
-              className="font-mono text-xs"
-              value={value}
-              onChange={(event) => onChange({ ...environment, [key]: event.currentTarget.value })}
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onChange(Object.fromEntries(entries.filter((_, entryIndex) => entryIndex !== index)))}
-            >
-              <TrashIcon />
-              <span className="sr-only">Remove {key}</span>
-            </Button>
-          </div>
-        ))
-      )}
-    </FieldGroup>
-  );
-}
-
-function CommandPreviewPanel({
-  preview,
-  pending,
-  error,
-}: {
-  preview: CommandPreview | undefined;
-  pending: boolean;
-  error: unknown;
-}) {
-  const [format, setFormat] = useState("command");
-  const content = format === "powershell" ? preview?.powershell : preview?.plain;
-  return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card">
-      <header className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5">
-        <div>
-          <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Generated command</p>
-          <p className="text-xs text-muted-foreground">Display-only; execution uses the argument array.</p>
-        </div>
-        {pending ? <RefreshCwIcon className="size-4 animate-spin text-muted-foreground" /> : null}
-      </header>
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        {!preview && pending ? <Skeleton className="h-48 w-full" /> : null}
-        {error ? <ErrorPanel error={error} /> : null}
-        {!preview && !pending && !error ? (
-          <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-5 text-center text-sm text-muted-foreground">
-            <SlidersHorizontalIcon className="size-5" />
-            Choose a runtime and complete model to generate the command.
-          </div>
-        ) : null}
-        {preview ? (
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-1.5">
-              <Badge variant="secondary">{preview.runtimeLabel}</Badge>
-              <Badge variant="outline">{preview.modelName}</Badge>
-              <Badge variant="outline">{preview.capabilityVersion}</Badge>
-            </div>
-            <Tabs value={format} onValueChange={setFormat}>
-              <div className="flex items-center justify-between gap-2">
-                <TabsList>
-                  <TabsTrigger value="command">Command</TabsTrigger>
-                  <TabsTrigger value="powershell">PowerShell</TabsTrigger>
-                </TabsList>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => content && void copyText(content)}
-                >
-                  <CopyIcon data-icon="inline-start" />
-                  Copy
-                </Button>
-              </div>
-              <TabsContent value="command">
-                <pre className="mt-2 max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap break-all">
-                  {preview.plain}
-                </pre>
-              </TabsContent>
-              <TabsContent value="powershell">
-                <pre className="mt-2 max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap break-all">
-                  {preview.powershell}
-                </pre>
-              </TabsContent>
-            </Tabs>
-            {Object.keys(preview.environment).length > 0 ? (
-              <div>
-                <p className="mb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Environment</p>
-                {Object.entries(preview.environment).map(([key, value]) => (
-                  <code key={key} className="block truncate font-mono text-xs">{key}={value}</code>
-                ))}
-              </div>
-            ) : null}
-            {preview.warnings.map((warning) => (
-              <Alert key={warning}>
-                <AlertTriangleIcon />
-                <AlertTitle>Launch-time adjustment</AlertTitle>
-                <AlertDescription>{warning}</AlertDescription>
-              </Alert>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-function EmptyOptions({ text }: { text: string }) {
-  return (
-    <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed text-center text-sm text-muted-foreground">
-      <SlidersHorizontalIcon className="size-5" />
-      {text}
-    </div>
-  );
-}
-
 function updateOption(
   options: Record<string, ProfileOptionSetting>,
   key: string,
@@ -1194,85 +510,7 @@ function updateOption(
   return next;
 }
 
-function settingForOption(
-  options: Record<string, ProfileOptionSetting>,
-  option: LlamaOption,
-  canonicalKey: string,
-): ProfileOptionSetting {
-  for (const key of [canonicalKey, option.flag, ...option.aliases]) {
-    if (Object.hasOwn(options, key)) return options[key]!;
-  }
-  return { mode: "default" };
-}
-
-function updateProfileOption(
-  options: Record<string, ProfileOptionSetting>,
-  option: LlamaOption,
-  canonicalKey: string,
-  setting: ProfileOptionSetting,
-): Record<string, ProfileOptionSetting> {
-  const next = { ...options };
-  for (const key of [canonicalKey, option.flag, ...option.aliases]) delete next[key];
-  if (setting.mode !== "default") next[canonicalKey] = setting;
-  return next;
-}
-
-function pruneInactiveSpeculativeOptions(
-  options: Record<string, ProfileOptionSetting>,
-  capabilities: LlamaCapabilities,
-): Record<string, ProfileOptionSetting> {
-  const allowed = new Set([
-    "speculativeType",
-    ...speculativeControlGroups(selectedSpeculativeTypes(options)).flatMap(
-      (group) => group.keys,
-    ),
-  ]);
-  const next = { ...options };
-  for (const storedKey of Object.keys(next)) {
-    const option = Object.values(capabilities.options).find((candidate) =>
-      candidate.knownKey === storedKey ||
-      candidate.flag === storedKey ||
-      candidate.aliases.includes(storedKey),
-    );
-    const knownKey = option?.knownKey;
-    if (knownKey && SPECULATIVE_KEYS.has(knownKey) && !allowed.has(knownKey)) {
-      delete next[storedKey];
-    }
-  }
-  return next;
-}
-
-function profileOptionKey(option: LlamaOption, counts: Map<string, number>): string {
-  return option.knownKey && counts.get(option.knownKey) === 1 ? option.knownKey : option.flag;
-}
-
-function orderedKnownOptions(
-  options: LlamaOption[],
-  keys: readonly string[],
-): LlamaOption[] {
-  return keys.flatMap((key) =>
-    options.filter((option) => option.knownKey === key),
-  );
-}
-
-function optionSupportsAuto(option: LlamaOption): boolean {
-  return (option.valueHint ?? "")
-    .split(/[^a-zA-Z0-9]+/)
-    .some((word) => word.toLowerCase() === "auto");
-}
-
 function optionMatches(option: LlamaOption, query: string): boolean {
   const normalized = query.trim().toLowerCase();
   return !normalized || `${option.displayName} ${option.flag} ${option.description}`.toLowerCase().includes(normalized);
-}
-
-async function copyText(value: string) {
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.success("Command copied");
-  } catch (error) {
-    toast.error("Could not copy the command", {
-      description: error instanceof Error ? error.message : String(error),
-    });
-  }
 }

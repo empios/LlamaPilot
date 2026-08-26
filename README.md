@@ -62,6 +62,8 @@ the work is your own `llama-server.exe`, built from the source and revision you 
   group split models, cache results, and pair multimodal projectors conservatively.
 - **Tune advanced serving setups** — configure KV cache types, GPU placement, tensor splits,
   Flash Attention, and runtime-advertised speculative decoding strategies with cross-field checks.
+- **Name models for API clients** — assign comma-separated aliases that coding agents and other
+  OpenAI-compatible clients can use in their `model` field when the runtime supports `--alias`.
 - **Run and observe** — Start, Stop, and Restart from the Dashboard or Profiles page; readiness
   comes from `/health`, while `/props`, `/slots`, and `/metrics` enrich optional telemetry.
 - **Keep the raw truth** — stdout and stderr are drained concurrently into a bounded live view and
@@ -177,6 +179,10 @@ Bug reports and focused pull requests are welcome.
   invariants
 - [llama.cpp integration](docs/LLAMA_INTEGRATION.md) — verified upstream behavior behind sources,
   builds, GGUF handling, command generation, health checks, and logs
+- [Release process](docs/RELEASING.md) — versioning, verification, tagging, and installer publishing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and [SECURITY.md](SECURITY.md)
+for responsible vulnerability reporting.
 
 ## License
 

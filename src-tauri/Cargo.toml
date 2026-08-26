@@ -1,6 +1,6 @@
 [package]
 name = "llamapilot"
-version = "0.1.4"
+version = "0.2.0"
 description = "Control panel and runtime manager for llama.cpp"
 authors = ["LlamaPilot contributors"]
 license = "MIT"

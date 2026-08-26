@@ -2,6 +2,7 @@
 
 -h,    --help, --usage                   print usage and exit
 --version                               show version and build info
+-a,    --alias STRING                  set model name aliases, comma-separated (to be used by API)
 -c,    --ctx-size N                     size of the prompt context (default: 4096)
 -b,    --batch-size N                   logical maximum batch size (default: 2048)
 -ub,   --ubatch-size N                  physical maximum batch size (default: 512)
