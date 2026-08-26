@@ -1,6 +1,6 @@
 [package]
 name = "llama-control"
-version = "0.1.0"
+version = "0.1.1"
 description = "Control panel and runtime manager for llama.cpp"
 authors = ["Llama Control contributors"]
 license = "MIT"
