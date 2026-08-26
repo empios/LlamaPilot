@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Llama Control</title>
+    <script>
+      // Resolve the theme before first paint. The authoritative preference lives in the Rust
+      // settings file, which cannot be read synchronously, so the last resolved value is
+      // mirrored into localStorage purely to avoid a light/dark flash on startup.
+      (() => {
+        try {
+          const stored = localStorage.getItem("llama-control.theme");
+          const preference = stored === "light" || stored === "dark" || stored === "system"
+            ? stored
+            : "system";
+          const resolved =
+            preference === "system"
+              ? window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : preference;
+
+          document.documentElement.classList.toggle("dark", resolved === "dark");
+          document.documentElement.style.colorScheme = resolved;
+        } catch {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

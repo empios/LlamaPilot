@@ -1,0 +1,2 @@
+version: b7900-790b5713 (build 7900, commit 790b5713)
+built with MSVC 19.50 for x86_64-pc-windows-msvc
