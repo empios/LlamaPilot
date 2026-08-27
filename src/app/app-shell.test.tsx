@@ -12,6 +12,9 @@ vi.mock("@/features/models/models-page", () => ({ ModelsPage: () => <div>Models 
 vi.mock("@/features/profiles/profiles-page", () => ({
   ProfilesPage: () => <div>Profiles page</div>,
 }));
+vi.mock("@/features/performance/performance-page", () => ({
+  PerformancePage: () => <div>Performance page</div>,
+}));
 vi.mock("@/features/runtime/runtimes-page", () => ({
   RuntimesPage: () => <div>Runtimes page</div>,
 }));
@@ -43,5 +46,8 @@ describe("application shell", () => {
     await waitFor(() => expect(screen.getByText("Profiles page")).toBeTruthy());
     expect(screen.getByText("Sidebar")).toBeTruthy();
     expect(screen.getByText("Topbar")).toBeTruthy();
+
+    act(() => useNavigationStore.getState().navigate("performance"));
+    await waitFor(() => expect(screen.getByText("Performance page")).toBeTruthy());
   });
 });

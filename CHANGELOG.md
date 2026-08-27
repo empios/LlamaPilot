@@ -6,6 +6,19 @@ development data.
 
 ## Unreleased
 
+### Added
+
+- A Performance Lab that generates runtime-valid all-GPU layer, row, and experimental tensor
+  placement candidates for a saved profile.
+- VRAM-weighted tensor-split recommendations with safety reserves and model-fit warnings.
+- A repeatable coding benchmark using llama-server completion timings, with persistent per-profile
+  history for comparing prompt processing, generation throughput, and end-to-end latency.
+- An automatic tuning sweep that validates, starts, measures, and stops every generated candidate,
+  skips failed placements, supports cancellation, restores the original profile on failure, and
+  saves the fastest successful generation configuration.
+- A public Hugging Face GGUF downloader with exact file selection, split-shard grouping, pinned
+  revisions, progress and cancellation, safe temporary writes, and automatic catalog refresh.
+
 ## 0.2.0 — 2026-08-26
 
 ### Added

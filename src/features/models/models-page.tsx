@@ -1,6 +1,7 @@
 import {
   AlertTriangleIcon,
   BotIcon,
+  DownloadIcon,
   FolderOpenIcon,
   ImageIcon,
   LayersIcon,
@@ -8,6 +9,7 @@ import {
   RefreshCwIcon,
   SettingsIcon,
 } from "lucide-react";
+import { useState } from "react";
 
 import { ErrorPanel } from "@/components/error-panel";
 import { PageHeader } from "@/components/page-header";
@@ -43,6 +45,8 @@ import {
   type ProjectorRecord,
 } from "@/types/models";
 
+import { DownloadModelDialog } from "./download-model-dialog";
+
 const AUTOMATIC_VALUE = "__automatic__";
 const DISABLED_VALUE = "__disabled__";
 const MISSING_VALUE = "__missing__";
@@ -52,6 +56,7 @@ export function ModelsPage() {
   const setProjector = useSetModelProjector();
   const pickGguf = useGgufPicker();
   const navigate = useNavigationStore((state) => state.navigate);
+  const [downloadOpen, setDownloadOpen] = useState(false);
 
   const roots = catalog.data?.roots.length ?? 0;
   const models = catalog.data ? primaryModels(catalog.data.models) : [];
@@ -71,6 +76,14 @@ export function ModelsPage() {
             <Button variant="outline" onClick={() => navigate("settings")}>
               <SettingsIcon data-icon="inline-start" />
               Folders
+            </Button>
+            <Button
+              variant="outline"
+              disabled={roots === 0}
+              onClick={() => setDownloadOpen(true)}
+            >
+              <DownloadIcon data-icon="inline-start" />
+              Hugging Face
             </Button>
             <Button disabled={catalog.isFetching} onClick={() => void catalog.refetch()}>
               <RefreshCwIcon
@@ -253,6 +266,14 @@ export function ModelsPage() {
             ))}
           </ul>
         </Section>
+      ) : null}
+
+      {downloadOpen && catalog.data ? (
+        <DownloadModelDialog
+          open={downloadOpen}
+          directories={catalog.data.roots}
+          onOpenChange={setDownloadOpen}
+        />
       ) : null}
     </div>
   );

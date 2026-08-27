@@ -75,8 +75,9 @@ src-tauri/src/
   runtime/          transactional snapshots, recovery metadata, capability re-inspection
   llama/            discovery runner, pure parsers, known-option registry, versioned sidecars
   gguf/             bounded GGUF v2/v3 metadata reader and split-name parser
-  models/           recursive catalog, fingerprint cache, shard grouping, mmproj choices
+  models/           recursive catalog, HF downloader, fingerprint cache, shard grouping, mmproj choices
   profiles/         one-file profiles, capability-checked generation, advanced dependency validation
+  performance/      all-GPU candidates, sweep supervision/ranking, benchmark parsing and history
   server/           one-child supervisor, lifecycle state, health probes, bounded/raw logs
 ```
 
@@ -90,7 +91,7 @@ tested from fixtures with no llama.cpp installed.
 src/
   app/          shell, providers, navigation definition
   components/   shared presentation (ui/ is shadcn, rest is app-level)
-  features/     dashboard · models · profiles · runtime · builds · logs · settings · sources
+  features/     dashboard · models · profiles · performance · runtime · builds · logs · settings
   hooks/        cross-feature hooks
   lib/          tauri bridge, formatting, branding, cn()
   stores/       Zustand client state (navigation, theme, transient UI)
@@ -141,6 +142,7 @@ stable across the LlamaPilot rename so existing installations keep their setting
   builds/metadata.json                 successful-build/runtime registry
   models/metadata.json                 persistent per-model mmproj overrides
   profiles/*.json
+  performance/history.json             newest-first bounded benchmark history
   runtimes/<commit>/<backend>/<runtime-id>/
     llama-server.exe
     runtime libraries
@@ -180,6 +182,13 @@ Git working copies and build trees are large and live wherever the user chooses 
 8. Server output is drained concurrently from stdout and stderr. Memory is capped at 10,000
    entries with an explicit dropped count; the per-run file receives the untouched line text.
    Timestamps, levels, streams, and parsed startup facts are side metadata, never rewrites.
+9. A manual Performance Lab benchmark never starts, stops, or mutates the active process implicitly.
+   The explicit automatic sweep requires an idle supervisor, holds a single-sweep permit, derives
+   every candidate from the original profile, and owns every start/stop until it finishes. It saves
+   only the fastest successful candidate; cancellation or total failure restores the original
+   profile. Manual profile mutations and server starts are rejected while the permit is held.
+   Requests disable prompt-cache reuse, and history captures the candidate, sweep, placement, and
+   GPU snapshot that produced each result.
 
 ## Testing
 
@@ -189,5 +198,8 @@ unknown future flags, dynamic speculative types, and device memory. Profile test
 constraints, device proportions, speculative strategy dependencies, runtime-advertised cache
 values, port selection, health/metric parsing, bounded logs, and the server lifecycle. Integration
 tests exercise real Git repositories and Windows Job Objects, including detached grandchildren
-and the cancel-before-process-adoption race. Frontend tests cover state derivation, retained build
-output, capability and server payloads, and per-strategy control selection.
+and the cancel-before-process-adoption race. The managed-serving fixture also executes the coding
+benchmark over HTTP and verifies current llama-server timing fields. Performance tests cover clean
+candidate application, generation-first ranking, cancellation, and exclusive sweep ownership.
+Frontend tests cover state derivation, retained build output, capability and server payloads,
+candidate application, and per-strategy control selection.

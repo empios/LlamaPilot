@@ -20,6 +20,11 @@ const ProfilesPage = lazy(() =>
     default: module.ProfilesPage,
   })),
 );
+const PerformancePage = lazy(() =>
+  import("@/features/performance/performance-page").then((module) => ({
+    default: module.PerformancePage,
+  })),
+);
 const RuntimesPage = lazy(() =>
   import("@/features/runtime/runtimes-page").then((module) => ({
     default: module.RuntimesPage,
@@ -80,6 +85,8 @@ function renderPage(page: PageId) {
       return <ModelsPage />;
     case "profiles":
       return <ProfilesPage />;
+    case "performance":
+      return <PerformancePage />;
     case "runtimes":
       return <RuntimesPage />;
     case "build":

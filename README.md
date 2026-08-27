@@ -60,8 +60,14 @@ the work is your own `llama-server.exe`, built from the source and revision you 
   and `--list-devices`, including unknown flags introduced by newer llama.cpp versions.
 - **Understand large model folders quickly** — scan GGUF metadata without reading tensor payloads,
   group split models, cache results, and pair multimodal projectors conservatively.
+- **Download the exact GGUF you choose** — browse a public Hugging Face model repository,
+  select one file or a complete shard set, and save it into an already configured model folder
+  with progress, cancellation, and an automatic catalog refresh.
 - **Tune advanced serving setups** — configure KV cache types, GPU placement, tensor splits,
   Flash Attention, and runtime-advertised speculative decoding strategies with cross-field checks.
+- **Measure one model across every GPU** — generate VRAM-weighted layer, row, and supported tensor
+  candidates, apply one to a profile, and compare repeatable coding-prompt timings in Performance
+  Lab.
 - **Name models for API clients** — assign comma-separated aliases that coding agents and other
   OpenAI-compatible clients can use in their `model` field when the runtime supports `--alias`.
 - **Run and observe** — Start, Stop, and Restart from the Dashboard or Profiles page; readiness
@@ -87,9 +93,14 @@ the download comes from `github.com/empios/LlamaPilot/releases` before running i
 2. Open **Runtimes** and clone upstream llama.cpp or register an existing working copy.
 3. Open **Build**, choose CPU or CUDA, and build `llama-server`.
 4. Inspect the new runtime so LlamaPilot can discover its exact command surface.
-5. Open **Models**, verify the model and optional multimodal projector pairing.
+5. Open **Models**, verify the model and optional multimodal projector pairing. You can also choose
+   **Hugging Face**, paste a public model repository URL or ID, and download an exact GGUF
+   selection directly into one of the configured model folders.
 6. Create a **Profile**, review the generated command, and press **Start**.
 7. Watch readiness, slots, throughput, and untouched output on **Dashboard** and **Logs**.
+8. Open **Performance** and run **Auto-tune** to test every runtime-valid GPU placement. LlamaPilot
+   performs isolated model loads, saves the fastest successful generation configuration, and leaves
+   the server stopped for review or launch.
 
 ## Safety by design
 
@@ -169,6 +180,13 @@ The initial eight-phase implementation roadmap is complete:
 6. Persistent launch profiles and exact command previews
 7. Advanced memory, multi-GPU, and speculative decoding controls
 8. Server supervision, health telemetry, and live/raw logs
+
+The current optimization track is focused on one coding-model server using all available GPUs.
+Performance Lab is the measurement foundation: it creates capability-aware placement candidates,
+records prompt and generation throughput, and keeps results tied to the exact profile, runtime,
+model, and GPU snapshot. Its automatic sweep tests each candidate under the same deterministic
+request, skips unsupported placements, and applies the fastest successful generation result without
+weakening the single-server safety model.
 
 The current version is an early release focused on a trustworthy local llama.cpp workflow.
 Bug reports and focused pull requests are welcome.

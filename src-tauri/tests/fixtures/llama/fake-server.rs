@@ -64,9 +64,7 @@ fn serve(arguments: &[String]) -> ExitCode {
         let Ok(mut stream) = stream else {
             continue;
         };
-        let mut request = [0_u8; 4096];
-        let count = stream.read(&mut request).unwrap_or(0);
-        let request = String::from_utf8_lossy(&request[..count]);
+        let request = read_request(&mut stream);
         let path = request
             .lines()
             .next()
@@ -85,6 +83,11 @@ fn serve(arguments: &[String]) -> ExitCode {
                 "text/plain",
                 "llamacpp:requests_processing 0\nllamacpp:predicted_tokens_seconds 12.5\n",
             ),
+            "/completion" => (
+                "200 OK",
+                "application/json",
+                r#"{"content":"review","truncated":false,"stop_type":"limit","timings":{"prompt_n":1024,"prompt_ms":2048.0,"prompt_per_second":500.0,"predicted_n":128,"predicted_ms":3200.0,"predicted_per_second":40.0}}"#,
+            ),
             _ => (
                 "404 Not Found",
                 "application/json",
@@ -99,6 +102,35 @@ fn serve(arguments: &[String]) -> ExitCode {
     }
 
     ExitCode::SUCCESS
+}
+
+fn read_request(stream: &mut std::net::TcpStream) -> String {
+    let mut request = Vec::new();
+    let mut buffer = [0_u8; 4096];
+    loop {
+        let count = stream.read(&mut buffer).unwrap_or(0);
+        if count == 0 {
+            break;
+        }
+        request.extend_from_slice(&buffer[..count]);
+        let Some(header_end) = request.windows(4).position(|window| window == b"\r\n\r\n") else {
+            continue;
+        };
+        let headers = String::from_utf8_lossy(&request[..header_end]);
+        let content_length = headers
+            .lines()
+            .find_map(|line| {
+                let (name, value) = line.split_once(':')?;
+                name.eq_ignore_ascii_case("content-length")
+                    .then(|| value.trim().parse::<usize>().ok())
+                    .flatten()
+            })
+            .unwrap_or(0);
+        if request.len() >= header_end + 4 + content_length {
+            break;
+        }
+    }
+    String::from_utf8_lossy(&request).into_owned()
 }
 
 fn argument<'a>(arguments: &'a [String], name: &str) -> Option<&'a str> {

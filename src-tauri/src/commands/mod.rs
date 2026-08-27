@@ -1,5 +1,6 @@
 pub mod build;
 pub mod models;
+pub mod performance;
 pub mod profiles;
 pub mod progress;
 pub mod server;
@@ -45,6 +46,16 @@ macro_rules! generated_command_handler {
             $crate::commands::build::delete_runtime,
             $crate::commands::models::scan_models,
             $crate::commands::models::set_model_projector,
+            $crate::commands::models::inspect_hugging_face_repository,
+            $crate::commands::models::download_hugging_face_model,
+            $crate::commands::models::cancel_model_download,
+            $crate::commands::models::is_model_download_running,
+            $crate::commands::performance::get_performance_plan,
+            $crate::commands::performance::list_performance_benchmarks,
+            $crate::commands::performance::run_performance_benchmark,
+            $crate::commands::performance::run_performance_sweep,
+            $crate::commands::performance::cancel_performance_sweep,
+            $crate::commands::performance::is_performance_sweep_running,
             $crate::commands::profiles::list_profiles,
             $crate::commands::profiles::create_profile,
             $crate::commands::profiles::update_profile,

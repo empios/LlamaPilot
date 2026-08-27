@@ -28,6 +28,8 @@ pub struct AppPaths {
     pub runtimes_metadata_file: PathBuf,
     pub models_dir: PathBuf,
     pub models_metadata_file: PathBuf,
+    pub performance_dir: PathBuf,
+    pub performance_history_file: PathBuf,
     pub cache_dir: PathBuf,
     pub model_metadata_cache_file: PathBuf,
     pub logs_dir: PathBuf,
@@ -67,6 +69,8 @@ impl AppPaths {
             runtimes_dir: data_dir.join("runtimes"),
             models_metadata_file: data_dir.join("models").join("metadata.json"),
             models_dir: data_dir.join("models"),
+            performance_history_file: data_dir.join("performance").join("history.json"),
+            performance_dir: data_dir.join("performance"),
             model_metadata_cache_file: data_dir.join("cache").join("model-metadata.json"),
             cache_dir: data_dir.join("cache"),
             logs_dir: data_dir.join("logs"),
@@ -84,6 +88,7 @@ impl AppPaths {
             &self.profiles_dir,
             &self.runtimes_dir,
             &self.models_dir,
+            &self.performance_dir,
             &self.cache_dir,
             &self.logs_dir,
         ] {
@@ -163,6 +168,10 @@ mod tests {
         assert_eq!(
             paths.model_metadata_cache_file,
             PathBuf::from("/data/cache/model-metadata.json")
+        );
+        assert_eq!(
+            paths.performance_history_file,
+            PathBuf::from("/data/performance/history.json")
         );
         assert_eq!(
             paths.default_sources_workspace(),

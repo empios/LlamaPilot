@@ -43,6 +43,9 @@ pub async fn start_server(
     state: State<'_, AppState>,
     profile_id: String,
 ) -> AppResult<ServerSnapshot> {
+    if state.performance_sweeps.is_running() {
+        return Err(crate::performance::sweep_in_progress_error());
+    }
     launch_profile(&state, profile_id).await
 }
 
@@ -53,6 +56,9 @@ pub async fn stop_server(state: State<'_, AppState>) -> AppResult<ServerSnapshot
 
 #[tauri::command]
 pub async fn restart_server(state: State<'_, AppState>) -> AppResult<ServerSnapshot> {
+    if state.performance_sweeps.is_running() {
+        return Err(crate::performance::sweep_in_progress_error());
+    }
     let snapshot = state.server.snapshot().await;
     let profile_id = snapshot.profile_id.ok_or_else(|| {
         AppError::new(
@@ -70,7 +76,10 @@ pub async fn restart_server(state: State<'_, AppState>) -> AppResult<ServerSnaps
     launch_profile(&state, profile_id).await
 }
 
-async fn launch_profile(state: &AppState, profile_id: String) -> AppResult<ServerSnapshot> {
+pub(crate) async fn launch_profile(
+    state: &AppState,
+    profile_id: String,
+) -> AppResult<ServerSnapshot> {
     let profile = state.profiles.find(&profile_id)?;
     let port = state
         .server

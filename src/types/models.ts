@@ -83,11 +83,75 @@ export const modelCatalogSchema = z.object({
   cacheMisses: z.number().int(),
 });
 
+export const huggingFaceFileSchema = z.object({
+  path: z.string(),
+  sizeBytes: z.number().int().nonnegative(),
+});
+
+export const huggingFaceGgufSelectionSchema = z.object({
+  id: z.string(),
+  displayName: z.string(),
+  files: z.array(huggingFaceFileSchema),
+  totalSizeBytes: z.number().int().nonnegative(),
+  expectedFiles: z.number().int().positive(),
+  complete: z.boolean(),
+});
+
+export const huggingFaceRepositorySchema = z.object({
+  repositoryId: z.string(),
+  revision: z.string(),
+  selections: z.array(huggingFaceGgufSelectionSchema),
+});
+
+export const modelDownloadEventSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("started"),
+    totalFiles: z.number().int().positive(),
+    totalBytes: z.number().int().nonnegative(),
+  }),
+  z.object({
+    type: z.literal("fileStarted"),
+    path: z.string(),
+    index: z.number().int().positive(),
+    totalFiles: z.number().int().positive(),
+  }),
+  z.object({
+    type: z.literal("progress"),
+    downloadedBytes: z.number().int().nonnegative(),
+    totalBytes: z.number().int().nonnegative(),
+    fileDownloadedBytes: z.number().int().nonnegative(),
+    fileSizeBytes: z.number().int().nonnegative(),
+  }),
+  z.object({
+    type: z.literal("finished"),
+    totalFiles: z.number().int().positive(),
+    totalBytes: z.number().int().nonnegative(),
+  }),
+]);
+
+export const modelDownloadOutcomeSchema = z.object({
+  files: z.array(z.string()),
+  catalog: modelCatalogSchema,
+});
+
 export type GgufMetadata = z.infer<typeof ggufMetadataSchema>;
 export type ModelRole = z.infer<typeof modelRoleSchema>;
 export type ModelRecord = z.infer<typeof modelRecordSchema>;
 export type ProjectorRecord = z.infer<typeof projectorRecordSchema>;
 export type ModelCatalog = z.infer<typeof modelCatalogSchema>;
+export type HuggingFaceGgufSelection = z.infer<
+  typeof huggingFaceGgufSelectionSchema
+>;
+export type HuggingFaceRepository = z.infer<typeof huggingFaceRepositorySchema>;
+export type ModelDownloadEvent = z.infer<typeof modelDownloadEventSchema>;
+export type ModelDownloadOutcome = z.infer<typeof modelDownloadOutcomeSchema>;
+
+export interface ModelDownloadRequest {
+  repositoryId: string;
+  revision: string;
+  selectionId: string;
+  destinationDirectory: string;
+}
 
 export type ProjectorSelection =
   | { mode: "auto" }

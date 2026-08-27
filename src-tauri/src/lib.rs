@@ -8,6 +8,7 @@ pub mod hardware;
 pub mod llama;
 pub mod logging;
 pub mod models;
+pub mod performance;
 pub mod platform;
 pub mod process;
 pub mod profiles;

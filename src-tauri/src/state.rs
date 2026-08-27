@@ -8,7 +8,8 @@ use crate::error::AppResult;
 use crate::git::Git;
 use crate::llama::artifacts as capability_artifacts;
 use crate::logging::LoggingHandle;
-use crate::models::ModelCatalogService;
+use crate::models::{ModelCatalogService, ModelDownloadSupervisor};
+use crate::performance::{PerformanceHistory, PerformanceSweepSupervisor};
 use crate::profiles::ProfileRepository;
 use crate::runtime::{snapshot, RuntimeRegistry};
 use crate::server::ServerSupervisor;
@@ -22,6 +23,9 @@ pub struct AppState {
     pub runtimes: JsonStore<RuntimeRegistry>,
     pub builds: BuildSupervisor,
     pub models: Arc<ModelCatalogService>,
+    pub model_downloads: ModelDownloadSupervisor,
+    pub performance: JsonStore<PerformanceHistory>,
+    pub performance_sweeps: PerformanceSweepSupervisor,
     pub profiles: Arc<ProfileRepository>,
     pub server: Arc<ServerSupervisor>,
     _logging: Option<LoggingHandle>,
@@ -51,6 +55,7 @@ impl AppState {
             paths.models_metadata_file.clone(),
         )?);
         let profiles = Arc::new(ProfileRepository::new(paths.profiles_dir.clone()));
+        let performance = JsonStore::load(paths.performance_history_file.clone())?;
         let server = ServerSupervisor::new(paths.logs_dir.join("servers"))?;
         // Successful builds are the runtime history. Keep the registry under builds/ as the
         // documented phase-3 history, while every snapshot also carries its own metadata.json.
@@ -111,6 +116,9 @@ impl AppState {
             runtimes,
             builds: BuildSupervisor::default(),
             models,
+            model_downloads: ModelDownloadSupervisor::default(),
+            performance,
+            performance_sweeps: PerformanceSweepSupervisor::default(),
             profiles,
             server,
             _logging: logging,

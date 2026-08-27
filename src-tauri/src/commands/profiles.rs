@@ -45,6 +45,17 @@ pub async fn update_profile(
     id: String,
     input: ProfileInput,
 ) -> AppResult<LaunchProfile> {
+    if state.performance_sweeps.is_running() {
+        return Err(crate::performance::sweep_in_progress_error());
+    }
+    update_profile_record(&state, id, input).await
+}
+
+pub(crate) async fn update_profile_record(
+    state: &AppState,
+    id: String,
+    input: ProfileInput,
+) -> AppResult<LaunchProfile> {
     let profiles = state.profiles.clone();
     let models = state.models.clone();
     let roots = state.settings.get().workspace.model_directories;
@@ -65,6 +76,9 @@ pub async fn update_profile(
 
 #[tauri::command]
 pub async fn delete_profile(state: State<'_, AppState>, id: String) -> AppResult<()> {
+    if state.performance_sweeps.is_running() {
+        return Err(crate::performance::sweep_in_progress_error());
+    }
     let snapshot = state.server.snapshot().await;
     if snapshot.state.is_active() && snapshot.profile_id.as_deref() == Some(&id) {
         return Err(AppError::new(

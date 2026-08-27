@@ -17,6 +17,10 @@ export const queryKeys = {
   profiles: ["profiles"] as const,
   serverStatus: ["server", "status"] as const,
   serverLogs: ["server", "logs"] as const,
+  performancePlan: (profileId: string) => ["performance", "plan", profileId] as const,
+  performanceBenchmarks: (profileId: string) =>
+    ["performance", "benchmarks", profileId] as const,
+  performanceSweepStatus: ["performance", "sweep", "status"] as const,
   profilePreview: (profileId: string | null, input: unknown) =>
     ["profiles", "preview", profileId ?? "new", input] as const,
   sources: ["sources"] as const,

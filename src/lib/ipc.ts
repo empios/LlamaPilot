@@ -40,8 +40,15 @@ import {
   type RuntimeInspection,
 } from "@/types/capabilities";
 import {
+  huggingFaceRepositorySchema,
   modelCatalogSchema,
+  modelDownloadEventSchema,
+  modelDownloadOutcomeSchema,
+  type HuggingFaceRepository,
   type ModelCatalog,
+  type ModelDownloadEvent,
+  type ModelDownloadOutcome,
+  type ModelDownloadRequest,
   type ProjectorSelection,
 } from "@/types/models";
 import {
@@ -59,6 +66,16 @@ import {
   type ServerLogsSnapshot,
   type ServerSnapshot,
 } from "@/types/server";
+import {
+  performanceBenchmarkSchema,
+  performancePlanSchema,
+  performanceSweepEventSchema,
+  performanceSweepSchema,
+  type PerformanceBenchmark,
+  type PerformancePlan,
+  type PerformanceSweep,
+  type PerformanceSweepEvent,
+} from "@/types/performance";
 
 /**
  * The only module that talks to Rust.
@@ -189,6 +206,28 @@ export const ipc = {
   ): Promise<void> =>
     call("set_model_projector", voidSchema, { modelId, selection }),
 
+  inspectHuggingFaceRepository: (
+    repository: string,
+  ): Promise<HuggingFaceRepository> =>
+    call("inspect_hugging_face_repository", huggingFaceRepositorySchema, {
+      repository,
+    }),
+
+  downloadHuggingFaceModel: (
+    request: ModelDownloadRequest,
+    onEvent: Channel<ModelDownloadEvent>,
+  ): Promise<ModelDownloadOutcome> =>
+    call("download_hugging_face_model", modelDownloadOutcomeSchema, {
+      request,
+      onEvent,
+    }),
+
+  cancelModelDownload: (): Promise<boolean> =>
+    call("cancel_model_download", zod.boolean()),
+
+  isModelDownloadRunning: (): Promise<boolean> =>
+    call("is_model_download_running", zod.boolean()),
+
   listProfiles: (): Promise<LaunchProfile[]> =>
     call("list_profiles", zod.array(launchProfileSchema)),
 
@@ -206,6 +245,31 @@ export const ipc = {
     input: ProfileInput,
   ): Promise<CommandPreview> =>
     call("preview_profile_command", commandPreviewSchema, { profileId, input }),
+
+  getPerformancePlan: (profileId: string): Promise<PerformancePlan> =>
+    call("get_performance_plan", performancePlanSchema, { profileId }),
+
+  listPerformanceBenchmarks: (
+    profileId: string | null,
+  ): Promise<PerformanceBenchmark[]> =>
+    call("list_performance_benchmarks", zod.array(performanceBenchmarkSchema), {
+      profileId,
+    }),
+
+  runPerformanceBenchmark: (profileId: string): Promise<PerformanceBenchmark> =>
+    call("run_performance_benchmark", performanceBenchmarkSchema, { profileId }),
+
+  runPerformanceSweep: (
+    profileId: string,
+    onEvent: Channel<PerformanceSweepEvent>,
+  ): Promise<PerformanceSweep> =>
+    call("run_performance_sweep", performanceSweepSchema, { profileId, onEvent }),
+
+  cancelPerformanceSweep: (): Promise<boolean> =>
+    call("cancel_performance_sweep", zod.boolean()),
+
+  isPerformanceSweepRunning: (): Promise<boolean> =>
+    call("is_performance_sweep_running", zod.boolean()),
 
   getServerStatus: (): Promise<ServerSnapshot> =>
     call("get_server_status", serverSnapshotSchema),
@@ -236,6 +300,28 @@ export function createProgressChannel(
 ): Channel<ProgressEvent> {
   const channel = new Channel<ProgressEvent>();
   channel.onmessage = onEvent;
+  return channel;
+}
+
+export function createPerformanceSweepChannel(
+  onEvent: (event: PerformanceSweepEvent) => void,
+): Channel<PerformanceSweepEvent> {
+  const channel = new Channel<PerformanceSweepEvent>();
+  channel.onmessage = (raw) => {
+    const parsed = performanceSweepEventSchema.safeParse(raw);
+    if (parsed.success) onEvent(parsed.data);
+  };
+  return channel;
+}
+
+export function createModelDownloadChannel(
+  onEvent: (event: ModelDownloadEvent) => void,
+): Channel<ModelDownloadEvent> {
+  const channel = new Channel<ModelDownloadEvent>();
+  channel.onmessage = (raw) => {
+    const parsed = modelDownloadEventSchema.safeParse(raw);
+    if (parsed.success) onEvent(parsed.data);
+  };
   return channel;
 }
 

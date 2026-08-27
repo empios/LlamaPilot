@@ -2,7 +2,7 @@
 
 This document records how LlamaPilot interacts with upstream `llama.cpp`, and which upstream
 facts were verified rather than assumed. Verified against `ggml-org/llama.cpp` `master`
-(checked 2026-08-25): `README.md`, `docs/build.md`, `docs/speculative.md`, `docs/multi-gpu.md`,
+(checked 2026-08-27): `README.md`, `docs/build.md`, `docs/speculative.md`, `docs/multi-gpu.md`,
 `tools/server/README.md`, `tools/mtmd/README.md`.
 
 The governing rule: **the selected `llama-server.exe --help` is the source of truth**, not this
@@ -232,6 +232,17 @@ controls instead of one shared form.
 
 ## 5. Models
 
+The Models page can inspect a public, ungated Hugging Face model repository and list only its
+`.gguf` files. The repository revision is resolved to a commit before download so every shard in a
+split model comes from the same snapshot. Conventional `-00001-of-00004.gguf` files are presented
+as one logical selection and an incomplete set cannot be downloaded.
+
+The destination must be one of the model directories already configured in Settings. Downloads
+are streamed into a temporary directory inside that destination, can be cancelled, are checked
+against the sizes reported by the Hub, and never overwrite an existing filename. Completed files
+are moved into place and the normal recursive model scan runs immediately. Authentication for
+private or gated repositories is intentionally deferred to a later version.
+
 Model directories are scanned recursively for `.gguf`. Only the GGUF header and key-value
 metadata block are read; the tensor payload is never loaded or mmapped, so listing a directory of
 multi-hundred-gigabyte models stays fast. Parsed metadata is cached by `path + size + mtime`.
@@ -391,6 +402,46 @@ One ordered Tauri channel carries state snapshots and log entries to a persisten
 bridge. Subscriber ids make mount/unmount safe under React Strict Mode, while snapshot commands
 repair state after a view reconnects. The Dashboard and Profiles pages use the same supervisor
 state, so controls cannot start a second profile or delete an active profile/runtime.
+
+### Performance Lab
+
+Performance Lab keeps the one-supervisor invariant and treats a saved profile as the unit under
+test. For the selected runtime it combines the immutable capability manifest with a fresh
+`nvidia-smi` snapshot, selects every runtime-advertised accelerator, reserves VRAM for the desktop,
+KV cache, and runtime overhead, and converts the remaining memory into integer split proportions.
+
+Candidates are emitted only from flags advertised by that exact binary:
+
+- **layer** is the safe all-GPU baseline and the initial recommendation;
+- **row** is offered when advertised, with the selected-list position of the GPU with the most
+  free memory used as main GPU;
+- **tensor** is offered only when advertised and is explicitly experimental. The candidate enables
+  Flash Attention, disables automatic fitting, requests KV offload, and selects a runtime-advertised
+  non-quantized cache type when available so the normal profile validator can accept or reject the
+  final combination.
+
+Applying a candidate uses the existing profile update path, so model/runtime identity and unrelated
+settings remain unchanged and every cross-field rule still runs. Strategy-specific options from a
+previous candidate are cleared before applying the next one, preventing row or tensor settings from
+contaminating a layer measurement.
+
+The explicit automatic sweep is allowed only while the server is stopped. It holds an exclusive
+sweep permit, derives every attempt from the same original profile, waits up to five minutes for the
+model to become `Ready`, performs one measurement, and stops the complete supervised process tree
+before continuing. Candidate failures are retained in the result but do not abort later safe
+attempts. Generation throughput is the primary ranking metric, followed by prompt throughput and
+latency. The winning candidate is saved while the server remains stopped; cancellation, total
+failure, or an unsafe cleanup condition restores the original profile. A separate cancel command
+sets a cooperative cancellation flag that is checked throughout model loading and between stages.
+
+A measurement requires the selected profile to be the idle `Ready` server. It sends a deterministic
+long Rust review prompt to `POST /completion`, requests 128 tokens with temperature zero and prompt
+cache reuse disabled, and reads the response's `timings.prompt_*` and `timings.predicted_*` fields.
+If a current server omits a precomputed rate, LlamaPilot derives it from token count and elapsed
+milliseconds. Results record latency, token counts, prompt/decode rates, speculative acceptance when
+present, placement overrides, runtime/model identity, candidate and sweep identifiers, and a
+point-in-time GPU snapshot. The newest 100 runs are persisted under `performance/history.json` and
+can be compared per profile.
 
 ## 8. Logs
 

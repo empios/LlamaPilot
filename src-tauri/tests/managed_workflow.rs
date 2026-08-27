@@ -9,6 +9,7 @@ use std::time::Duration;
 use llamapilot_lib::build::profile::{BuildBackend, BuildConfiguration};
 use llamapilot_lib::llama::{artifacts, discovery};
 use llamapilot_lib::models::ModelCatalogService;
+use llamapilot_lib::performance::{local_base_url, run_benchmark};
 use llamapilot_lib::process::CommandSpec;
 use llamapilot_lib::profiles::{
     build_command_preview, ProfileInput, ProfileOptionSetting, ProfileRepository,
@@ -147,6 +148,12 @@ async fn serves_a_discovered_model_through_a_persisted_profile() {
         .entries
         .iter()
         .any(|entry| entry.text.contains("server is listening")));
+
+    let benchmark = run_benchmark(&local_base_url(&profile.host, profile.port))
+        .await
+        .expect("coding benchmark");
+    assert_eq!(benchmark.prompt_tokens_per_second, 500.0);
+    assert_eq!(benchmark.predicted_tokens_per_second, 40.0);
 
     supervisor.stop().await.expect("server stop request");
     supervisor
