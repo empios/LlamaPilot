@@ -1,3 +1,4 @@
+pub mod agent;
 pub mod build;
 pub mod models;
 pub mod performance;
@@ -16,6 +17,7 @@ pub mod system;
 macro_rules! generated_command_handler {
     () => {
         tauri::generate_handler![
+            $crate::commands::agent::test_agent_connection,
             $crate::commands::settings::get_settings,
             $crate::commands::settings::update_settings,
             $crate::commands::settings::reset_settings,

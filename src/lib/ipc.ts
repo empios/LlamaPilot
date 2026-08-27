@@ -1,6 +1,11 @@
 import { Channel, invoke, isTauri } from "@tauri-apps/api/core";
 import type { z } from "zod";
 
+import {
+  agentConnectionTestSchema,
+  type AgentConnectionTest,
+  type AgentConnectionTestRequest,
+} from "@/types/agent";
 import { toAppError } from "@/types/errors";
 import {
   appInfoSchema,
@@ -111,6 +116,11 @@ async function call<Schema extends z.ZodType>(
 const voidSchema = zod.union([zod.null(), zod.undefined()]).transform(() => undefined);
 
 export const ipc = {
+  testAgentConnection: (
+    request: AgentConnectionTestRequest,
+  ): Promise<AgentConnectionTest> =>
+    call("test_agent_connection", agentConnectionTestSchema, { request }),
+
   getAppInfo: (): Promise<AppInfo> => call("get_app_info", appInfoSchema),
 
   getHardwareSnapshot: (): Promise<HardwareSnapshot> =>

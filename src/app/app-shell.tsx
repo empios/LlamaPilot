@@ -25,6 +25,11 @@ const PerformancePage = lazy(() =>
     default: module.PerformancePage,
   })),
 );
+const AgentConnectPage = lazy(() =>
+  import("@/features/agent/agent-connect-page").then((module) => ({
+    default: module.AgentConnectPage,
+  })),
+);
 const RuntimesPage = lazy(() =>
   import("@/features/runtime/runtimes-page").then((module) => ({
     default: module.RuntimesPage,
@@ -87,6 +92,8 @@ function renderPage(page: PageId) {
       return <ProfilesPage />;
     case "performance":
       return <PerformancePage />;
+    case "agent":
+      return <AgentConnectPage />;
     case "runtimes":
       return <RuntimesPage />;
     case "build":

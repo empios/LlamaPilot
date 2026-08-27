@@ -39,6 +39,7 @@ export const errorCodeSchema = z.enum([
   "modelDownloadFailed",
   "modelDownloadInProgress",
   "modelDownloadCancelled",
+  "agentConnectionFailed",
   "invalidProfile",
   "profileNotFound",
   "portInUse",

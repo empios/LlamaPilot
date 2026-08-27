@@ -78,6 +78,7 @@ src-tauri/src/
   models/           recursive catalog, HF downloader, fingerprint cache, shard grouping, mmproj choices
   profiles/         one-file profiles, capability-checked generation, advanced dependency validation
   performance/      all-GPU candidates, sweep supervision/ranking, benchmark parsing and history
+  agent.rs          bounded OpenAI-compatible model discovery and chat verification
   server/           one-child supervisor, lifecycle state, health probes, bounded/raw logs
 ```
 
@@ -91,7 +92,7 @@ tested from fixtures with no llama.cpp installed.
 src/
   app/          shell, providers, navigation definition
   components/   shared presentation (ui/ is shadcn, rest is app-level)
-  features/     dashboard · models · profiles · performance · runtime · builds · logs · settings
+  features/     dashboard · models · profiles · performance · agent · runtime · builds · logs · settings
   hooks/        cross-feature hooks
   lib/          tauri bridge, formatting, branding, cn()
   stores/       Zustand client state (navigation, theme, transient UI)

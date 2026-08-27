@@ -41,7 +41,7 @@ export function ServerPanel() {
         ? { value: "Add a model", label: "Open Models", page: "models" as const }
         : profileCount === 0
           ? { value: "Create a profile", label: "Open Profiles", page: "profiles" as const }
-          : { value: "Ready for launch", label: "Open Profiles", page: "profiles" as const };
+          : { value: "Ready for agent", label: "Open Agent Connect", page: "agent" as const };
 
   return (
     <Section

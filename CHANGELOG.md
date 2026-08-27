@@ -18,6 +18,9 @@ development data.
   saves the fastest successful generation configuration.
 - A public Hugging Face GGUF downloader with exact file selection, split-shard grouping, pinned
   revisions, progress and cancellation, safe temporary writes, and automatic catalog refresh.
+- Agent Connect with supervised-profile launch, effective endpoint and model discovery, an actual
+  OpenAI-compatible models/chat test, transient API-key support, and copy-ready JSON, OpenAI
+  JavaScript, Aider PowerShell, OpenCode, and Pi configurations.
 
 ## 0.2.0 — 2026-08-26
 

@@ -9,6 +9,7 @@ export const PAGE_IDS = [
   "models",
   "profiles",
   "performance",
+  "agent",
   "runtimes",
   "build",
   "logs",

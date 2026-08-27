@@ -41,6 +41,7 @@ pub enum ErrorCode {
     ModelDownloadFailed,
     ModelDownloadInProgress,
     ModelDownloadCancelled,
+    AgentConnectionFailed,
     InvalidProfile,
     ProfileNotFound,
     PortInUse,

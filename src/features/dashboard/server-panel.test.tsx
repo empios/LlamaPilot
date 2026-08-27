@@ -99,7 +99,7 @@ describe("dashboard server panel", () => {
 
     render(<ServerPanel />);
 
-    expect(screen.getByText("Ready for launch")).toBeTruthy();
+    expect(screen.getByText("Ready for agent")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Start server" }));
     expect(hooks.start).toHaveBeenCalledWith("profile-1");
   });

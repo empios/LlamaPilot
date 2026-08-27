@@ -70,6 +70,9 @@ the work is your own `llama-server.exe`, built from the source and revision you 
   Lab.
 - **Name models for API clients** — assign comma-separated aliases that coding agents and other
   OpenAI-compatible clients can use in their `model` field when the runtime supports `--alias`.
+- **Connect a coding agent without guessing** — start a profile, verify `/v1/models` and
+  `/v1/chat/completions`, then copy the effective URL, model ID, and ready configuration for
+  OpenCode, Pi, Aider, or an OpenAI JavaScript client from Agent Connect.
 - **Run and observe** — Start, Stop, and Restart from the Dashboard or Profiles page; readiness
   comes from `/health`, while `/props`, `/slots`, and `/metrics` enrich optional telemetry.
 - **Keep the raw truth** — stdout and stderr are drained concurrently into a bounded live view and
@@ -101,6 +104,8 @@ the download comes from `github.com/empios/LlamaPilot/releases` before running i
 8. Open **Performance** and run **Auto-tune** to test every runtime-valid GPU placement. LlamaPilot
    performs isolated model loads, saves the fastest successful generation configuration, and leaves
    the server stopped for review or launch.
+9. Open **Agent Connect**, start the tuned profile, run the compatibility test, and copy the
+   generated connection settings into the coding agent.
 
 ## Safety by design
 

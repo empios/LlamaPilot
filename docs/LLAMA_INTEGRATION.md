@@ -403,6 +403,26 @@ bridge. Subscriber ids make mount/unmount safe under React Strict Mode, while sn
 repair state after a view reconnects. The Dashboard and Profiles pages use the same supervisor
 state, so controls cannot start a second profile or delete an active profile/runtime.
 
+### Agent Connect
+
+Agent Connect derives its URL from the active supervisor snapshot, including the actual port chosen
+by automatic port selection. Wildcard listeners are converted to loopback addresses for local
+clients. The page reads configured model aliases before connection, then replaces that tentative
+value with the exact identifier returned by `GET /v1/models` after a successful test. Upstream
+documents both that endpoint and `POST /v1/chat/completions` as OpenAI-compatible server APIs in
+the [llama-server documentation](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md).
+
+The backend refuses caller-provided URLs: it can test only the currently supervised, `Ready`
+llama-server process. It first lists models and then requests a deterministic 16-token chat reply,
+validating the standard assistant-message envelope rather than treating a successful health check
+as proof of client compatibility. An optional bearer key is bounded, sent only for these requests,
+and never persisted. The frontend produces neutral connection JSON, an OpenAI JavaScript example,
+and the environment/CLI form documented for [Aider's OpenAI-compatible API support](https://aider.chat/docs/llms/openai-compat.html).
+It also generates a custom `@ai-sdk/openai-compatible` provider for
+[OpenCode](https://opencode.ai/docs/providers) and an `openai-completions` provider entry for Pi's
+[`~/.pi/agent/models.json`](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/models.md).
+Both use the effective endpoint and the exact model id discovered by the connection test.
+
 ### Performance Lab
 
 Performance Lab keeps the one-supervisor invariant and treats a saved profile as the unit under

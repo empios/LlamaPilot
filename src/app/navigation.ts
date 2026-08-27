@@ -1,4 +1,5 @@
 import {
+  CableIcon,
   FileTextIcon,
   GaugeIcon,
   HammerIcon,
@@ -51,6 +52,12 @@ export const navigationGroups: NavigationGroup[] = [
         label: "Performance",
         icon: RocketIcon,
         description: "Multi-GPU plans and repeatable coding benchmarks",
+      },
+      {
+        id: "agent",
+        label: "Agent Connect",
+        icon: CableIcon,
+        description: "Verify and copy OpenAI-compatible coding-agent settings",
       },
     ],
   },
