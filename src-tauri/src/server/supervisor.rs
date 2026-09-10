@@ -630,12 +630,11 @@ mod tests {
         let listener = TcpListener::bind(("127.0.0.1", 0)).expect("test listener");
         let port = listener.local_addr().expect("address").port();
         drop(listener);
-        let command = CommandSpec::new("powershell.exe").args([
-            "-NoLogo",
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            "Write-Output 'fixture stdout'; [Console]::Error.WriteLine('fixture stderr'); Start-Sleep -Seconds 30",
+        // Avoid cold PowerShell/.NET startup in a test of process supervision, not shell startup.
+        let command = CommandSpec::new("cmd.exe").args([
+            "/D",
+            "/C",
+            "echo fixture stdout&1>&2 echo fixture stderr&ping -n 31 127.0.0.1 >nul",
         ]);
 
         supervisor
@@ -669,7 +668,8 @@ mod tests {
             }
             assert!(
                 tokio::time::Instant::now() < deadline,
-                "fixture output timed out"
+                "fixture output timed out: {:?}",
+                logs.entries
             );
             tokio::time::sleep(Duration::from_millis(25)).await;
         }
