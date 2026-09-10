@@ -65,3 +65,14 @@ checks passed. A complete release must contain every required architecture and f
   found a test-module ordering lint, now fixed. The final revision is being verified separately.
 - DMG verification caught incomplete default signing; ad-hoc bundle signing is now explicit in
   the macOS configuration and both CI paths verify the mounted app signature.
+
+- Final local checks: 202 Rust unit tests and 15 integration tests pass, 76 frontend tests pass,
+  formatting/Clippy/typecheck/build pass. The signed DMG passes hdiutil verification and strict
+  codesign validation, reports arm64/version 0.3.0, and launches with the corrected generator list.
+- CPU fallback: a separate GGML_METAL=OFF build also completed two supervised model-load,
+  completion, stop/restart cycles. Metal and CPU binaries link only to system frameworks/libraries.
+- Release assembly: a complete six-package fixture produced verified SHA-256 entries; removing
+  the Intel Mac asset was rejected. Optional signing setup handles absent credentials without
+  setting empty APPLE_* variables, and rejects partial credentials before packaging.
+- Local delivery: `artifacts/LlamaPilot_0.3.0_aarch64.dmg`, checksum sidecar and VALIDATION.md.
+  The full native CI and tagged release publication are tracked in PR #12.
