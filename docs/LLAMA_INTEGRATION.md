@@ -486,3 +486,6 @@ builds use CMAKE_BUILD_TYPE; Visual Studio/Xcode use --config. Native compiler d
 MSVC requirements on Unix. Runtime files keep executable modes, materialize shared-library links,
 and include versioned .so files and Metal resources. Platform process supervision and POSIX
 preview generation are described in ARCHITECTURE.md.
+
+OpenSSL is requested as static libraries too, preventing runtime snapshots from depending on a
+Homebrew OpenSSL installation. System frameworks and GPU drivers remain external dependencies.

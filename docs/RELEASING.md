@@ -29,7 +29,7 @@ overwrite an already published release; fixes require a new version.
 
 ## macOS signing
 
-Local builds without an identity use Tauri's ad-hoc signing and are not notarized. Configure
+The macOS configuration defaults to ad-hoc signing (`-`) without notarization. APPLE_SIGNING_IDENTITY overrides it when a Developer ID is configured. Configure
 protected repository/release credentials for Developer ID distribution:
 APPLE_CERTIFICATE (base64 PKCS#12), APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY,
 APPLE_ID, APPLE_PASSWORD (app-specific), and APPLE_TEAM_ID.
@@ -44,7 +44,7 @@ integrity hashes; those are not a publisher signature.
 
 ```sh
 npm ci
-npm run tauri build -- --bundles dmg
+APPLE_SIGNING_IDENTITY=- npm run tauri build -- --bundles dmg
 shasum -a 256 src-tauri/target/release/bundle/dmg/*.dmg
 ```
 
