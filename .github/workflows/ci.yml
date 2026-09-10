@@ -54,6 +54,15 @@ jobs:
       - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
       - name: Build native packages
         uses: tauri-apps/tauri-action@v1
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
+      - name: Verify macOS disk image and bundle signature
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          find src-tauri/target -path '*/bundle/dmg/*.dmg' -type f -print0 | while IFS= read -r -d '' image; do
+            bash scripts/verify-macos-dmg.sh "$image"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: packages-${{ matrix.os }}

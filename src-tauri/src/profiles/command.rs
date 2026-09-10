@@ -311,6 +311,25 @@ fn invalid_profile(message: impl Into<String>) -> AppError {
     AppError::new(ErrorCode::InvalidProfile, message)
 }
 
+fn posix_preview(
+    program: &str,
+    arguments: &[String],
+    environment: &BTreeMap<String, String>,
+) -> String {
+    fn quote(value: &str) -> String {
+        format!("'{}'", value.replace('\'', "'\"'\"'"))
+    }
+    let mut words = vec!["env".to_string()];
+    words.extend(
+        environment
+            .iter()
+            .map(|(key, value)| quote(&format!("{key}={value}"))),
+    );
+    words.push(quote(program));
+    words.extend(arguments.iter().map(|arg| quote(arg)));
+    words.join(" ")
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
@@ -585,25 +604,6 @@ mod tests {
         );
         assert!(build_command_preview(core, &runtime(), &capabilities(), &target()).is_err());
     }
-}
-
-fn posix_preview(
-    program: &str,
-    arguments: &[String],
-    environment: &BTreeMap<String, String>,
-) -> String {
-    fn quote(value: &str) -> String {
-        format!("'{}'", value.replace('\'', "'\"'\"'"))
-    }
-    let mut words = vec!["env".to_string()];
-    words.extend(
-        environment
-            .iter()
-            .map(|(key, value)| quote(&format!("{key}={value}"))),
-    );
-    words.push(quote(program));
-    words.extend(arguments.iter().map(|arg| quote(arg)));
-    words.join(" ")
 }
 
 #[cfg(all(test, unix))]

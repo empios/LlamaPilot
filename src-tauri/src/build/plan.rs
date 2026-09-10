@@ -78,6 +78,9 @@ pub fn plan_build(
 
     // Only the server is needed, and skipping the rest of the tools roughly halves build time.
     configure.push("-DBUILD_SHARED_LIBS=OFF".to_string());
+    configure.push("-UOPENSSL_SSL_LIBRARY".to_string());
+    configure.push("-UOPENSSL_CRYPTO_LIBRARY".to_string());
+    configure.push("-DOPENSSL_USE_STATIC_LIBS=TRUE".to_string());
     configure.push("-DCMAKE_BUILD_RPATH_USE_ORIGIN=ON".to_string());
     configure.push("-DLLAMA_BUILD_SERVER=ON".to_string());
     configure.push("-DLLAMA_BUILD_TESTS=OFF".to_string());
@@ -169,6 +172,9 @@ mod tests {
                 "-DGGML_CUDA=ON",
                 "-DGGML_METAL=OFF",
                 "-DBUILD_SHARED_LIBS=OFF",
+                "-UOPENSSL_SSL_LIBRARY",
+                "-UOPENSSL_CRYPTO_LIBRARY",
+                "-DOPENSSL_USE_STATIC_LIBS=TRUE",
                 "-DCMAKE_BUILD_RPATH_USE_ORIGIN=ON",
                 "-DLLAMA_BUILD_SERVER=ON",
                 "-DLLAMA_BUILD_TESTS=OFF",

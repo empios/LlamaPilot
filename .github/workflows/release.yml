@@ -85,12 +85,19 @@ jobs:
         env:
           APPLE_CERTIFICATE: ${{ runner.os == 'macOS' && secrets.APPLE_CERTIFICATE || '' }}
           APPLE_CERTIFICATE_PASSWORD: ${{ runner.os == 'macOS' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
-          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && secrets.APPLE_SIGNING_IDENTITY || '' }}
+          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && (secrets.APPLE_SIGNING_IDENTITY || '-') || '' }}
           APPLE_ID: ${{ runner.os == 'macOS' && secrets.APPLE_ID || '' }}
           APPLE_PASSWORD: ${{ runner.os == 'macOS' && secrets.APPLE_PASSWORD || '' }}
           APPLE_TEAM_ID: ${{ runner.os == 'macOS' && secrets.APPLE_TEAM_ID || '' }}
         with:
           args: --target ${{ matrix.target }}
+      - name: Verify macOS disk image and bundle signature
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          find src-tauri/target -path '*/bundle/dmg/*.dmg' -type f -print0 | while IFS= read -r -d '' image; do
+            bash scripts/verify-macos-dmg.sh "$image"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: installers-${{ matrix.target }}

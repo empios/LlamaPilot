@@ -187,7 +187,11 @@ pub fn parse_nvcc_version(output: &str) -> Option<String> {
 pub fn parse_generators(output: &str) -> Vec<CmakeGenerator> {
     let mut generators = Vec::new();
 
-    for line in output.lines() {
+    for line in output
+        .lines()
+        .skip_while(|line| line.trim() != "Generators")
+        .skip(1)
+    {
         let Some((left, _description)) = line.split_once('=') else {
             continue;
         };
@@ -412,5 +416,18 @@ Build cuda_13.3.r13.3/compiler.36000000_0
 
         assert!(toolchain.can_build_cpu());
         assert!(!toolchain.can_build_cuda());
+    }
+}
+
+#[cfg(test)]
+mod platform_tests {
+    use super::*;
+    #[test]
+    fn cmake_options_are_not_generator_names() {
+        let help = "Usage\n  -S <path> = Source directory\nGenerators\n* Unix Makefiles = Generates standard makefiles.\n  Ninja = Generates build.ninja files.\n";
+        let generators = parse_generators(help);
+        assert_eq!(generators.len(), 2);
+        assert_eq!(generators[0].name, "Unix Makefiles");
+        assert!(generators[0].is_default);
     }
 }

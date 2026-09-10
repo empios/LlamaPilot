@@ -54,3 +54,14 @@ checks passed. A complete release must contain every required architecture and f
   tools and embedded shaders. Further relocation/inference checks are recorded below.
 - Local DMG: build in progress. CI/platform and signing qualification remain distinct from these
   Apple Silicon checks.
+
+- Real Metal inference: a relocated, statically linked server completed two model-load / HTTP
+  completion / stop cycles through LlamaPilot's ServerSupervisor on Apple M4 Max. The locally
+  available Bielik 11B model generated 8 tokens per request. System frameworks are the only
+  dynamic dependencies after requesting static OpenSSL and invalidating its old CMake cache.
+- UI launch: the packaged app displays version 0.3.0, Apple GPU status, native C++/Make tools,
+  and CPU/Metal choices without requiring MSVC or CUDA.
+- First remote CI run: macOS ARM64, macOS Intel, and Ubuntu package/test jobs passed. Windows
+  found a test-module ordering lint, now fixed. The final revision is being verified separately.
+- DMG verification caught incomplete default signing; ad-hoc bundle signing is now explicit in
+  the macOS configuration and both CI paths verify the mounted app signature.
