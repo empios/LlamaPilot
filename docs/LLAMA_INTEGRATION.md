@@ -475,3 +475,14 @@ Startup facts worth surfacing (model load progress, GPU offload, KV allocation, 
 and tokens/sec) are parsed opportunistically into side metadata. The Logs page offers text search,
 level and stream filters, pause/resume, auto-scroll, copy, clear-view, fact badges, and a raw mode
 that shows only the untouched original line. Clearing affects the bounded view, not the transcript.
+
+## Cross-platform build and runtime additions
+
+CPU sets GGML_CUDA=OFF and GGML_METAL=OFF; CUDA sets GGML_CUDA=ON and GGML_METAL=OFF;
+Metal sets GGML_CUDA=OFF, GGML_METAL=ON, and GGML_METAL_EMBED_LIBRARY=ON. Static llama.cpp
+libraries are selected by default with BUILD_SHARED_LIBS=OFF. Configure is rerun for every build
+so edited options cannot be silently ignored by an existing cache. Single-config Make/Ninja
+builds use CMAKE_BUILD_TYPE; Visual Studio/Xcode use --config. Native compiler detection replaces
+MSVC requirements on Unix. Runtime files keep executable modes, materialize shared-library links,
+and include versioned .so files and Metal resources. Platform process supervision and POSIX
+preview generation are described in ARCHITECTURE.md.

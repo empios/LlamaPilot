@@ -1,41 +1,48 @@
 # Contributing to LlamaPilot
 
-Focused bug fixes, compatibility updates, tests, and usability improvements are welcome. Keep the
-application's scope narrow: LlamaPilot manages the user's own `llama.cpp` server; it is not a chat
-client or inference backend.
+LlamaPilot manages the user's own llama.cpp server. Native code, tests, and installers must
+remain compatible with the [supported platforms](docs/PLATFORM_SUPPORT.md).
 
 ## Development setup
 
-Use Windows 10 or 11 with Node.js 20+, Rust stable with the MSVC target, Git, and Visual Studio
-2022's **Desktop development with C++** workload. CMake and CUDA are only required for exercising
-the corresponding build paths.
+Use Node.js 22+, Rust stable, and Git everywhere. Install platform build dependencies:
 
-```powershell
+- Windows: MSVC Rust target and Visual Studio's **Desktop development with C++** workload.
+- macOS: `xcode-select --install`; install CMake for exercising llama.cpp builds
+  (`brew install cmake`; Ninja is optional).
+- Ubuntu 22.04/24.04:
+
+```sh
+sudo apt-get update
+sudo apt-get install build-essential curl git cmake ninja-build libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+```
+
+AppImage packaging on Ubuntu 22.04 also needs `libfuse2` (`libfuse2t64` on Ubuntu 24.04).
+CUDA is optional and requires a supported toolkit, host compiler, and NVIDIA driver.
+
+```sh
 npm ci
 npm run tauri dev
 ```
 
-Do not run Git, CMake, or user-provided values through a shell string. Process arguments must stay
-as discrete values owned by the Rust backend. Preserve the safety invariants described in
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+## Verification
 
-## Before opening a pull request
-
-Run the same checks as CI:
-
-```powershell
-./scripts/check-version-sync.ps1
+```sh
+npm run check:version
 npm run typecheck
 npm run test:coverage
 npm run build
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
-cargo test --manifest-path src-tauri/Cargo.toml
+cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+cargo test --locked --manifest-path src-tauri/Cargo.toml
+npm run tauri build
 ```
 
-Add tests for behavior changes. Parsers and validation should normally have pure unit tests;
-process ownership, Git behavior, and other OS boundaries belong in integration tests. Frontend
-changes should cover user-visible state transitions rather than implementation details.
+CI runs native tests and packaging on Windows x64, macOS Apple Silicon/Intel, and Linux x64.
+Tests that bind loopback ports or spawn real descendants require ordinary OS access.
+The ignored Unix watchdog fixture is invoked by its parent-death integration test automatically.
 
-Keep pull requests focused and update `CHANGELOG.md` under **Unreleased** when the change affects
-users, persisted data, compatibility, or the release process.
+Keep process arguments as arrays. Never run user input through a shell; generated shell previews
+are for copying only. Preserve the invariants in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Add focused tests for changed behavior, especially platform boundaries and visible state transitions.
+Update CHANGELOG.md for user-visible, persistence, compatibility, or release-process changes.

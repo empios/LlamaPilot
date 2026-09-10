@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { runtimeCapabilitySummarySchema } from "@/types/capabilities";
 
-export const buildBackendSchema = z.enum(["cpu", "cuda"]);
+export const buildBackendSchema = z.enum(["cpu", "cuda", "metal"]);
 export const buildConfigurationSchema = z.enum([
   "release",
   "relWithDebInfo",
@@ -14,6 +14,8 @@ export const toolIdSchema = z.enum([
   "cmake",
   "visualStudio",
   "msvc",
+  "cxx",
+  "make",
   "ninja",
   "cudaToolkit",
   "nvcc",
@@ -46,6 +48,8 @@ export const cmakeGeneratorSchema = z.object({
 export const toolchainSchema = z.object({
   tools: z.array(toolStatusSchema),
   generators: z.array(cmakeGeneratorSchema),
+  backends: z.array(buildBackendSchema),
+  defaultBackend: buildBackendSchema,
 });
 
 export const buildProfileSchema = z.object({
@@ -101,7 +105,7 @@ export interface BuildRequest {
 }
 
 export const defaultBuildProfile: BuildProfile = {
-  backend: "cuda",
+  backend: "cpu",
   configuration: "release",
   generator: null,
   parallelJobs: null,
@@ -115,6 +119,8 @@ export function backendLabel(backend: BuildBackend): string {
   switch (backend) {
     case "cuda":
       return "CUDA";
+    case "metal":
+      return "Metal";
     case "cpu":
       return "CPU";
     default: {
