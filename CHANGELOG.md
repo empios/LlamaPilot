@@ -6,7 +6,18 @@ development data.
 
 ## Unreleased
 
+## 0.3.0 — 2026-09-10
+
 ### Added
+
+- macOS Apple Silicon/Intel DMGs and Linux x64 AppImage/Debian packaging, with a native CI matrix
+  and one complete GitHub Release containing all supported installers and SHA-256 checksums.
+- Apple Metal builds, native Unix compiler detection, desktop tool lookup, Apple unified-memory
+  reporting, POSIX command previews, and POSIX Aider connection snippets.
+- Unix process-group watchdogs for cancellation and parent-exit cleanup, with integration tests.
+- Relocatable static runtime defaults, versioned shared-library and Metal resource snapshots,
+  platform support documentation, and portable version validation.
+
 
 - A Performance Lab that generates runtime-valid all-GPU layer, row, and experimental tensor
   placement candidates for a saved profile.

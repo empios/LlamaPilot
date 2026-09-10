@@ -87,3 +87,13 @@ describe("Agent Connect configuration", () => {
     });
   });
 });
+
+
+describe("POSIX Aider snippet", () => {
+  it("quotes shell metacharacters and confines environment to Aider", () => {
+    const text = buildAgentSnippet("aiderPosix", { apiBaseUrl: "http://localhost:8080/v1", apiKey: "it's $HOME", model: "model; echo unsafe" });
+    expect(text).toContain("env OPENAI_API_BASE='");
+    expect(text).toContain("OPENAI_API_KEY='it'\"'\"'s $HOME'");
+    expect(text).toContain("--model 'openai/model; echo unsafe'");
+  });
+});

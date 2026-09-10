@@ -47,7 +47,7 @@ pub fn build_plan(
 
     if devices.is_empty() {
         warnings.push(
-            "The selected runtime reported no accelerator devices. Inspect a CUDA runtime before generating a GPU plan."
+            "The selected runtime reported no accelerator devices. Inspect an accelerator-enabled runtime before generating a GPU plan."
                 .into(),
         );
     } else if devices.len() == 1 {
@@ -102,11 +102,17 @@ fn performance_devices(
 ) -> Vec<PerformanceDevice> {
     let mut devices: Vec<_> = runtime_devices
         .iter()
+        .filter(|device| {
+            let id = device.id.to_ascii_lowercase();
+            let backend = device.backend.as_deref().unwrap_or("").to_ascii_lowercase();
+            !id.starts_with("cpu") && id != "blas" && backend != "cpu" && backend != "blas"
+        })
         .enumerate()
         .map(|(position, device)| {
             let hardware = device_index(&device.id)
                 .and_then(|index| hardware_gpus.iter().find(|gpu| gpu.index == index))
-                .or_else(|| hardware_gpus.get(position));
+                .or_else(|| hardware_gpus.get(position))
+                .filter(|_| device.id.to_ascii_lowercase().starts_with("cuda"));
             PerformanceDevice {
                 id: device.id.clone(),
                 name: if device.name.trim().is_empty() {
@@ -592,5 +598,44 @@ mod tests {
         assert_eq!(applied.options.get("splitMode"), Some(&custom("layer")));
         assert!(!applied.options.contains_key("mainGpu"));
         assert!(!applied.options.contains_key("kvCacheTypeK"));
+    }
+}
+
+#[cfg(test)]
+mod platform_tests {
+    use super::*;
+    #[test]
+    fn metal_uses_runtime_budget_and_does_not_count_blas_as_a_gpu() {
+        let devices = vec![
+            LlamaDevice {
+                id: "MTL0".into(),
+                name: "Apple GPU".into(),
+                backend: Some("Metal".into()),
+                memory_total_mib: Some(24000),
+                memory_free_mib: Some(12000),
+                raw: String::new(),
+            },
+            LlamaDevice {
+                id: "BLAS".into(),
+                name: "Accelerate".into(),
+                backend: Some("BLAS".into()),
+                memory_total_mib: Some(0),
+                memory_free_mib: Some(0),
+                raw: String::new(),
+            },
+        ];
+        let hardware = vec![GpuInfo {
+            index: 0,
+            name: "Apple GPU".into(),
+            total_memory_mib: 32000,
+            free_memory_mib: 20000,
+            used_memory_mib: 12000,
+            driver_version: None,
+        }];
+        let result = performance_devices(&devices, &hardware);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].total_memory_mib, Some(24000));
+        assert_eq!(result[0].free_memory_mib, Some(12000));
+        assert_eq!(result[0].split_percent, 100);
     }
 }

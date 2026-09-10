@@ -25,7 +25,7 @@ fn resolve(explicit: Option<&PathBuf>, program: &str) -> Option<PathBuf> {
     if let Some(path) = explicit {
         return path.is_file().then(|| path.clone());
     }
-    which::which(program).ok()
+    crate::platform::resolve_tool(std::ffi::OsStr::new(program))
 }
 
 /// Detects everything needed to build llama.cpp on this machine.
@@ -40,14 +40,46 @@ pub async fn detect(settings: &Settings) -> Toolchain {
     let (cmake, generators) = detect_cmake(settings).await;
     tools.push(cmake);
 
-    tools.push(detect_visual_studio().await);
-    tools.push(detect_msvc().await);
+    if cfg!(windows) {
+        tools.push(detect_visual_studio().await);
+        tools.push(detect_msvc().await);
+    } else {
+        tools.push(detect_cxx().await);
+        tools.push(detect_make().await);
+    }
     tools.push(detect_ninja().await);
-    tools.push(detect_cuda_toolkit());
-    tools.push(detect_nvcc().await);
-    tools.push(detect_nvidia_driver().await);
-
-    Toolchain { tools, generators }
+    if !cfg!(target_os = "macos") {
+        tools.push(detect_cuda_toolkit());
+        tools.push(detect_nvcc().await);
+        tools.push(detect_nvidia_driver().await);
+    }
+    use super::profile::BuildBackend;
+    let mut backends = vec![BuildBackend::Cpu];
+    if cfg!(target_os = "macos") {
+        if cfg!(target_arch = "aarch64") {
+            backends.push(BuildBackend::Metal);
+        }
+    } else {
+        backends.push(BuildBackend::Cuda);
+    }
+    let default_backend = if backends.contains(&BuildBackend::Metal) {
+        BuildBackend::Metal
+    } else if tools
+        .iter()
+        .filter(|tool| tool.requirement == ToolRequirement::RequiredForCuda)
+        .all(|tool| tool.found)
+        && backends.contains(&BuildBackend::Cuda)
+    {
+        BuildBackend::Cuda
+    } else {
+        BuildBackend::Cpu
+    };
+    Toolchain {
+        tools,
+        generators,
+        backends,
+        default_backend,
+    }
 }
 
 async fn detect_git(settings: &Settings) -> ToolStatus {
@@ -56,7 +88,7 @@ async fn detect_git(settings: &Settings) -> ToolStatus {
             ToolId::Git,
             "Git",
             ToolRequirement::Required,
-            "Install Git for Windows from git-scm.com, then restart the application.",
+            "Install Git using your platform package manager or git-scm.com, or select its executable in Settings.",
         );
     };
 
@@ -76,7 +108,7 @@ async fn detect_cmake(settings: &Settings) -> (ToolStatus, Vec<CmakeGenerator>) 
             ToolId::Cmake,
             "CMake",
             ToolRequirement::Required,
-            "Install CMake, or select the \"C++ CMake tools for Windows\" component in the Visual Studio installer.",
+            "Install CMake using your platform package manager or cmake.org, or select its executable in Settings.",
         );
         return (status, Vec::new());
     };
@@ -233,7 +265,7 @@ async fn detect_msvc() -> ToolStatus {
 }
 
 async fn detect_ninja() -> ToolStatus {
-    let Some(path) = which::which("ninja").ok() else {
+    let Some(path) = resolve(None, "ninja") else {
         return ToolStatus::missing(
             ToolId::Ninja,
             "Ninja",
@@ -253,12 +285,19 @@ async fn detect_ninja() -> ToolStatus {
 }
 
 fn detect_cuda_toolkit() -> ToolStatus {
-    let root = std::env::var_os("CUDA_PATH").map(PathBuf::from);
+    let root = std::env::var_os("CUDA_PATH")
+        .or_else(|| std::env::var_os("CUDA_HOME"))
+        .map(PathBuf::from)
+        .or_else(|| {
+            resolve(None, "nvcc")
+                .and_then(|p| std::fs::canonicalize(p).ok())
+                .and_then(|p| p.parent()?.parent().map(Path::to_path_buf))
+        });
 
     match root.filter(|path| path.is_dir()) {
         Some(path) => ToolStatus::found(ToolId::CudaToolkit, "CUDA Toolkit", ToolRequirement::RequiredForCuda)
             .with_path(Some(path))
-            .with_detail("Located via CUDA_PATH"),
+            .with_detail("Located via CUDA_PATH, CUDA_HOME or nvcc"),
         None => ToolStatus::missing(
             ToolId::CudaToolkit,
             "CUDA Toolkit",
@@ -277,7 +316,7 @@ async fn detect_nvcc() -> ToolStatus {
         })
         .filter(|path| path.is_file());
 
-    let Some(path) = from_toolkit.or_else(|| which::which("nvcc").ok()) else {
+    let Some(path) = from_toolkit.or_else(|| resolve(None, "nvcc")) else {
         return ToolStatus::missing(
             ToolId::Nvcc,
             "nvcc",
@@ -319,5 +358,49 @@ async fn detect_nvidia_driver() -> ToolStatus {
             .map(|gpu| gpu.name.as_str())
             .collect::<Vec<_>>()
             .join(", "),
+    )
+}
+
+async fn detect_cxx() -> ToolStatus {
+    let remedy = if cfg!(target_os = "macos") {
+        "Install Apple Command Line Tools with xcode-select --install."
+    } else {
+        "Install a C++ compiler (Ubuntu: sudo apt install build-essential)."
+    };
+    for name in ["c++", "clang++", "g++"] {
+        if let Some(path) = resolve(None, name) {
+            if let Some(version) = probe(&path, &["--version"]).await {
+                return ToolStatus::found(ToolId::Cxx, "C++ compiler", ToolRequirement::Required)
+                    .with_path(Some(path))
+                    .with_version(version.lines().next().map(str::to_string));
+            }
+        }
+    }
+    ToolStatus::missing(
+        ToolId::Cxx,
+        "C++ compiler",
+        ToolRequirement::Required,
+        remedy,
+    )
+}
+
+async fn detect_make() -> ToolStatus {
+    if let Some(path) = resolve(None, "make") {
+        if probe(&path, &["--version"]).await.is_some() {
+            return ToolStatus::found(ToolId::Make, "Make", ToolRequirement::Required)
+                .with_path(Some(path));
+        }
+    }
+    // Ninja is a valid replacement for Make; users can select its generator.
+    let requirement = if resolve(None, "ninja").is_some() {
+        ToolRequirement::Optional
+    } else {
+        ToolRequirement::Required
+    };
+    ToolStatus::missing(
+        ToolId::Make,
+        "Make",
+        requirement,
+        "Install Make or Ninja; select Ninja as the generator if Make is unavailable.",
     )
 }

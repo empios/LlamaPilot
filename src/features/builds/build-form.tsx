@@ -57,7 +57,11 @@ export function BuildForm() {
   const clearLines = useBuildLogStore((state) => state.clear);
 
   const [sourceId, setSourceId] = useState<string | null>(null);
-  const [profile, setProfile] = useState<BuildProfile>(defaultBuildProfile);
+  const [selectedProfile, setProfile] = useState<BuildProfile | null>(null);
+  const profile = selectedProfile ?? {
+    ...defaultBuildProfile,
+    backend: toolchain.data?.defaultBackend ?? "cpu",
+  };
   const [clean, setClean] = useState(false);
 
   const availableSources = sources.data ?? [];
@@ -76,7 +80,7 @@ export function BuildForm() {
       .every((tool) => tool.found) ?? false;
 
   const blocked =
-    !baseReady || (profile.backend === "cuda" && !cudaReady) || !selectedSourceId;
+    !baseReady || !toolchain.data?.backends.includes(profile.backend) || (profile.backend === "cuda" && !cudaReady) || !selectedSourceId;
   const isBuilding = buildRuntime.isPending || buildStatus.data === true;
 
   const start = () => {
@@ -179,17 +183,15 @@ export function BuildForm() {
               }
             }}
           >
-            <ToggleGroupItem value="cuda">
-              <MicrochipIcon />
-              CUDA
-            </ToggleGroupItem>
-            <ToggleGroupItem value="cpu">
-              <CpuIcon />
-              CPU
-            </ToggleGroupItem>
+            {(toolchain.data?.backends ?? ["cpu"]).map((backend) => (
+              <ToggleGroupItem key={backend} value={backend}>
+                {backend === "cpu" ? <CpuIcon /> : <MicrochipIcon />}
+                {backendLabel(backend)}
+              </ToggleGroupItem>
+            ))}
           </ToggleGroup>
           <FieldDescription>
-            CUDA passes <code>-DGGML_CUDA=ON</code>, matching upstream docs/build.md.
+            CPU uses the processor; Metal accelerates Apple Silicon; CUDA uses NVIDIA GPUs.
           </FieldDescription>
         </Field>
 
@@ -325,7 +327,7 @@ export function BuildForm() {
           <Textarea
             id="build-extra"
             value={profile.additionalCmakeArgs.join("\n")}
-            placeholder={"-DGGML_CUDA_FORCE_MMQ=ON\n-DCMAKE_CUDA_COMPILER=C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.3\\bin\\nvcc.exe"}
+            placeholder={"-DGGML_NATIVE=OFF"}
             onChange={(event) =>
               setProfile({
                 ...profile,

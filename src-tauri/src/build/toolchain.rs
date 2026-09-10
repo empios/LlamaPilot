@@ -32,6 +32,8 @@ pub enum ToolId {
     Cmake,
     VisualStudio,
     Msvc,
+    Cxx,
+    Make,
     Ninja,
     CudaToolkit,
     Nvcc,
@@ -100,6 +102,8 @@ impl ToolStatus {
 pub struct Toolchain {
     pub tools: Vec<ToolStatus>,
     pub generators: Vec<CmakeGenerator>,
+    pub backends: Vec<super::profile::BuildBackend>,
+    pub default_backend: super::profile::BuildBackend,
 }
 
 impl Toolchain {
@@ -183,7 +187,11 @@ pub fn parse_nvcc_version(output: &str) -> Option<String> {
 pub fn parse_generators(output: &str) -> Vec<CmakeGenerator> {
     let mut generators = Vec::new();
 
-    for line in output.lines() {
+    for line in output
+        .lines()
+        .skip_while(|line| line.trim() != "Generators")
+        .skip(1)
+    {
         let Some((left, _description)) = line.split_once('=') else {
             continue;
         };
@@ -386,6 +394,8 @@ Build cuda_13.3.r13.3/compiler.36000000_0
     fn build_capability_follows_tool_requirements() {
         let toolchain = Toolchain {
             generators: Vec::new(),
+            backends: vec![super::super::profile::BuildBackend::Cpu],
+            default_backend: super::super::profile::BuildBackend::Cpu,
             tools: vec![
                 ToolStatus::found(ToolId::Cmake, "CMake", ToolRequirement::Required),
                 ToolStatus::found(ToolId::Msvc, "MSVC", ToolRequirement::Required),
@@ -406,5 +416,18 @@ Build cuda_13.3.r13.3/compiler.36000000_0
 
         assert!(toolchain.can_build_cpu());
         assert!(!toolchain.can_build_cuda());
+    }
+}
+
+#[cfg(test)]
+mod platform_tests {
+    use super::*;
+    #[test]
+    fn cmake_options_are_not_generator_names() {
+        let help = "Usage\n  -S <path> = Source directory\nGenerators\n* Unix Makefiles = Generates standard makefiles.\n  Ninja = Generates build.ninja files.\n";
+        let generators = parse_generators(help);
+        assert_eq!(generators.len(), 2);
+        assert_eq!(generators[0].name, "Unix Makefiles");
+        assert!(generators[0].is_default);
     }
 }

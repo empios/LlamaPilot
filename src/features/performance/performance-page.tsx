@@ -202,7 +202,7 @@ export function PerformancePage() {
               <Section
                 label="Placement plan"
                 title={`${plan.data.devices.length} GPU configuration`}
-                description="Initial proportions reserve VRAM for the Windows desktop, KV cache, and runtime overhead."
+                description="Initial proportions reserve memory for the desktop, KV cache, and runtime overhead."
                 icon={RocketIcon}
                 bodyClassName="flex flex-col gap-6 p-4"
               >

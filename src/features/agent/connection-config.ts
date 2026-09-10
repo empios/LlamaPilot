@@ -1,6 +1,6 @@
 import type { LaunchProfile } from "@/types/profiles";
 
-export type AgentSnippetKind = "json" | "openaiJs" | "aider" | "opencode" | "pi";
+export type AgentSnippetKind = "json" | "openaiJs" | "aiderPosix" | "aider" | "opencode" | "pi";
 
 export interface AgentConnectionValues {
   apiBaseUrl: string;
@@ -63,6 +63,8 @@ const response = await client.chat.completions.create({
 });
 
 console.log(response.choices[0]?.message?.content);`;
+    case "aiderPosix":
+      return `env OPENAI_API_BASE=${posixLiteral(values.apiBaseUrl)} OPENAI_API_KEY=${posixLiteral(values.apiKey)} aider --model ${posixLiteral(`openai/${values.model}`)}`;
     case "aider":
       return `$env:OPENAI_API_BASE = '${powershellLiteral(values.apiBaseUrl)}'
 $env:OPENAI_API_KEY = '${powershellLiteral(values.apiKey)}'
@@ -120,4 +122,8 @@ aider --model 'openai/${powershellLiteral(values.model)}'`;
 
 function powershellLiteral(value: string): string {
   return value.replaceAll("'", "''");
+}
+
+function posixLiteral(value: string): string {
+  return "'" + value.replaceAll("'", "'\"'\"'") + "'";
 }

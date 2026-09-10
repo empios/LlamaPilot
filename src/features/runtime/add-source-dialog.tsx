@@ -187,7 +187,7 @@ function ExistingForm({ onDone }: { onDone: () => void }) {
             <Input
               id="existing-directory"
               value={directory}
-              placeholder="C:\repos\llama.cpp"
+              placeholder="Absolute path to your llama.cpp folder"
               onChange={(event) => setDirectory(event.currentTarget.value)}
             />
             <Button

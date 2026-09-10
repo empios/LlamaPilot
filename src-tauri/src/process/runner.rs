@@ -95,7 +95,13 @@ async fn run(
 ) -> AppResult<CommandOutput> {
     let started = Instant::now();
 
-    let mut command = Command::new(&spec.program);
+    let resolved = platform::resolve_tool(&spec.program);
+    let mut command = Command::new(
+        resolved
+            .as_deref()
+            .map(|p| p.as_os_str())
+            .unwrap_or(&spec.program),
+    );
     command
         .args(&spec.args)
         .stdin(Stdio::null())
@@ -106,6 +112,7 @@ async fn run(
     if let Some(directory) = &spec.working_directory {
         command.current_dir(directory);
     }
+    command.env("PATH", platform::tool_path());
     for (key, value) in &spec.environment {
         command.env(key, value);
     }
@@ -118,15 +125,24 @@ async fn run(
         ));
     }
 
+    let owned_group = if group.is_none() {
+        Some(ProcessGroup::new()?)
+    } else {
+        None
+    };
+    let group = group.or(owned_group.as_ref());
+    if let Some(group) = group {
+        group.prepare(&mut command);
+    }
+
     let mut child = command
         .spawn()
         .map_err(|error| map_spawn_error(spec, error))?;
 
     if let (Some(group), Some(process_id)) = (group, child.id()) {
-        // A failure here means we lose tree-kill, not that the build is invalid, so it is
-        // logged rather than aborting a build the user asked for.
         if let Err(error) = group.adopt(process_id) {
-            tracing::warn!(%error, process_id, "could not supervise the child process");
+            let _ = child.kill().await;
+            return Err(error);
         }
     }
 
@@ -146,7 +162,12 @@ async fn run(
     let stdout_task = tokio::spawn(pump(stdout, OutputStream::Stdout, sink.clone()));
     let stderr_task = tokio::spawn(pump(stderr, OutputStream::Stderr, sink));
 
-    let status = child.wait().await.map_err(|error| {
+    let process_id = child.id();
+    let status = child.wait().await;
+    if let (Some(group), Some(pid)) = (group, process_id) {
+        group.release(pid);
+    }
+    let status = status.map_err(|error| {
         AppError::new(
             ErrorCode::ProcessFailed,
             format!("{} did not run to completion.", spec.program_display()),

@@ -36,6 +36,7 @@ export const commandPreviewSchema = z.object({
   environment: z.record(z.string(), z.string()),
   plain: z.string(),
   powershell: z.string(),
+  posix: z.string().optional(),
   runtimeLabel: z.string(),
   modelName: z.string(),
   capabilityVersion: z.string(),

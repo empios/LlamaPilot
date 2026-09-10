@@ -60,11 +60,12 @@ import {
   type AgentSnippetKind,
 } from "./connection-config";
 
-const SNIPPET_KINDS = ["json", "openaiJs", "aider", "opencode", "pi"] as const;
+const SNIPPET_KINDS = ["json", "openaiJs", "aider", "aiderPosix", "opencode", "pi"] as const;
 
 const SNIPPET_HELP: Record<AgentSnippetKind, string> = {
   json: "Generic connection values for clients with manual OpenAI-compatible setup.",
   openaiJs: "Install the openai package and use this client in a JavaScript project.",
+  aiderPosix: "Run this command in a macOS or Linux terminal to start Aider.",
   aider: "Run these commands in PowerShell before starting Aider.",
   opencode: "Save or merge this configuration into opencode.json in your project.",
   pi: "Save or merge this provider into ~/.pi/agent/models.json, then select llamapilot in /model.",
@@ -397,6 +398,7 @@ export function AgentConnectPage() {
                 <TabsTrigger value="json">Connection JSON</TabsTrigger>
                 <TabsTrigger value="openaiJs">OpenAI JavaScript</TabsTrigger>
                 <TabsTrigger value="aider">Aider PowerShell</TabsTrigger>
+                <TabsTrigger value="aiderPosix">Aider macOS / Linux</TabsTrigger>
                 <TabsTrigger value="opencode">OpenCode</TabsTrigger>
                 <TabsTrigger value="pi">Pi</TabsTrigger>
               </TabsList>

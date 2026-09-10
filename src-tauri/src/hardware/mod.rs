@@ -30,6 +30,7 @@ pub struct HardwareSnapshot {
     /// True when an NVIDIA GPU was detected. It does not imply the CUDA toolkit is installed —
     /// that is reported separately by toolchain detection.
     pub nvidia_present: bool,
+    pub unified_memory: bool,
 }
 
 /// Collects a point-in-time view of the machine.
@@ -56,14 +57,50 @@ pub async fn snapshot() -> HardwareSnapshot {
         available_bytes: system.available_memory(),
     };
 
-    let gpus = nvidia::query_gpus().await;
+    let unified_memory = cfg!(all(target_os = "macos", target_arch = "aarch64"));
+    let gpus = if unified_memory {
+        apple_gpus(&memory).await
+    } else {
+        nvidia::query_gpus().await
+    };
     let nvidia_driver = gpus.iter().find_map(|gpu| gpu.driver_version.clone());
 
     HardwareSnapshot {
-        nvidia_present: !gpus.is_empty(),
+        nvidia_present: !unified_memory && !gpus.is_empty(),
+        unified_memory,
         nvidia_driver,
         gpus,
         cpu,
         memory,
     }
+}
+
+async fn apple_gpus(memory: &MemoryInfo) -> Vec<GpuInfo> {
+    let spec = crate::process::CommandSpec::new("/usr/sbin/system_profiler")
+        .args(["SPDisplaysDataType", "-json"]);
+    let Ok(output) = crate::process::capture(&spec).await else {
+        return Vec::new();
+    };
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(&output.stdout) else {
+        return Vec::new();
+    };
+    let Some(displays) = value["SPDisplaysDataType"].as_array() else {
+        return Vec::new();
+    };
+    displays
+        .iter()
+        .enumerate()
+        .filter_map(|(index, display)| {
+            let name = display["sppci_model"].as_str()?;
+            Some(GpuInfo {
+                index: index as u32,
+                name: name.to_string(),
+                total_memory_mib: memory.total_bytes / (1024 * 1024),
+                used_memory_mib: memory.total_bytes.saturating_sub(memory.available_bytes)
+                    / (1024 * 1024),
+                free_memory_mib: memory.available_bytes / (1024 * 1024),
+                driver_version: None,
+            })
+        })
+        .collect()
 }

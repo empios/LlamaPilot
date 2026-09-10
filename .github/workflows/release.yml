@@ -1,73 +1,140 @@
-name: Release Windows installers
-
+name: Release desktop installers
 on:
   push:
-    tags:
-      - "v*"
+    tags: ['v*']
   workflow_dispatch:
-
+    inputs:
+      tag:
+        description: Existing version tag to build (for example v0.3.0)
+        required: true
+        type: string
 permissions:
-  contents: write
-
+  contents: read
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
-
 jobs:
-  release:
-    runs-on: windows-latest
-
+  validate:
+    runs-on: ubuntu-22.04
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
-      - name: Check out the tagged revision
-        uses: actions/checkout@v7
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Validate existing tag and main ancestry
+        id: tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          node scripts/check-version-sync.mjs "$RELEASE_TAG"
+          git rev-parse --verify "refs/tags/$RELEASE_TAG"
+          test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "$RELEASE_TAG")"
+          git merge-base --is-ancestor HEAD origin/main
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+  build:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-15
+            target: aarch64-apple-darwin
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.validate.outputs.tag }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
-
-      - name: Cache Rust build artifacts
-        uses: swatinem/rust-cache@v2
+          targets: ${{ matrix.target }}
+      - uses: swatinem/rust-cache@v2
         with:
-          workspaces: "./src-tauri -> target"
-
-      - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Validate version metadata and pushed tag
-        shell: pwsh
+          workspaces: ./src-tauri -> target
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libfuse2
+      - run: npm ci
+      - run: npm run build
+      - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+      - run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+      - name: Configure optional macOS signing
+        if: runner.os == 'macOS'
         env:
-          RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
-        run: ./scripts/check-version-sync.ps1 -Tag $env:RELEASE_TAG
-
-      - name: Run frontend checks
-        run: |
-          npm run typecheck
-          npm test
-
-      - name: Run Rust checks
-        run: |
-          cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-          cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
-          cargo test --manifest-path src-tauri/Cargo.toml
-
-      - name: Build installers and publish the release
+          RELEASE_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          RELEASE_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          RELEASE_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          RELEASE_APPLE_ID: ${{ secrets.APPLE_ID }}
+          RELEASE_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          RELEASE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: node scripts/configure-apple-signing.mjs
+      - name: Build packages
         uses: tauri-apps/tauri-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: LlamaPilot v__VERSION__
-          releaseBody: >-
-            Download the Windows installer below. The NSIS setup executable is recommended for
-            most users.
-          generateReleaseNotes: true
-          releaseDraft: false
-          prerelease: false
-          uploadUpdaterJson: false
+          args: --target ${{ matrix.target }}
+      - name: Verify macOS disk image and bundle signature
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          find src-tauri/target -path '*/bundle/dmg/*.dmg' -type f -print0 | while IFS= read -r -d '' image; do
+            bash scripts/verify-macos-dmg.sh "$image"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
+  publish:
+    needs: [validate, build]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.validate.outputs.tag }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installers-*
+          path: release-artifacts
+      - name: Verify packages and generate checksums
+        run: node scripts/prepare-release.mjs release-artifacts
+      - name: Publish one complete release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft > /tmp/release-draft 2>/dev/null; then
+            test "$(cat /tmp/release-draft)" = true || { echo 'Refusing to overwrite a published release'; exit 1; }
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "LlamaPilot $RELEASE_TAG" --generate-notes --notes-file docs/RELEASE_DOWNLOADS.md
+          fi
+          gh release upload "$RELEASE_TAG" release-artifacts/final/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false

@@ -77,6 +77,11 @@ pub fn plan_build(
     }
 
     // Only the server is needed, and skipping the rest of the tools roughly halves build time.
+    configure.push("-DBUILD_SHARED_LIBS=OFF".to_string());
+    configure.push("-UOPENSSL_SSL_LIBRARY".to_string());
+    configure.push("-UOPENSSL_CRYPTO_LIBRARY".to_string());
+    configure.push("-DOPENSSL_USE_STATIC_LIBS=TRUE".to_string());
+    configure.push("-DCMAKE_BUILD_RPATH_USE_ORIGIN=ON".to_string());
     configure.push("-DLLAMA_BUILD_SERVER=ON".to_string());
     configure.push("-DLLAMA_BUILD_TESTS=OFF".to_string());
     configure.push("-DLLAMA_BUILD_EXAMPLES=OFF".to_string());
@@ -165,6 +170,12 @@ mod tests {
                 "-G",
                 "Visual Studio 18 2026",
                 "-DGGML_CUDA=ON",
+                "-DGGML_METAL=OFF",
+                "-DBUILD_SHARED_LIBS=OFF",
+                "-UOPENSSL_SSL_LIBRARY",
+                "-UOPENSSL_CRYPTO_LIBRARY",
+                "-DOPENSSL_USE_STATIC_LIBS=TRUE",
+                "-DCMAKE_BUILD_RPATH_USE_ORIGIN=ON",
                 "-DLLAMA_BUILD_SERVER=ON",
                 "-DLLAMA_BUILD_TESTS=OFF",
                 "-DLLAMA_BUILD_EXAMPLES=OFF",
@@ -185,17 +196,17 @@ mod tests {
     }
 
     #[test]
-    fn a_cpu_build_passes_no_backend_definition() {
+    fn a_cpu_build_explicitly_disables_gpu_backends() {
         let profile = BuildProfile {
             backend: BuildBackend::Cpu,
             ..cuda_profile()
         };
         let plan = plan_build(&source(), &build(), &profile);
 
-        assert!(!plan
+        assert!(plan.configure_args.contains(&"-DGGML_CUDA=OFF".to_string()));
+        assert!(plan
             .configure_args
-            .iter()
-            .any(|arg| arg.contains("GGML_CUDA")));
+            .contains(&"-DGGML_METAL=OFF".to_string()));
     }
 
     #[test]
