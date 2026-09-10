@@ -32,6 +32,8 @@ pub enum ToolId {
     Cmake,
     VisualStudio,
     Msvc,
+    Cxx,
+    Make,
     Ninja,
     CudaToolkit,
     Nvcc,
@@ -100,6 +102,8 @@ impl ToolStatus {
 pub struct Toolchain {
     pub tools: Vec<ToolStatus>,
     pub generators: Vec<CmakeGenerator>,
+    pub backends: Vec<super::profile::BuildBackend>,
+    pub default_backend: super::profile::BuildBackend,
 }
 
 impl Toolchain {
@@ -386,6 +390,8 @@ Build cuda_13.3.r13.3/compiler.36000000_0
     fn build_capability_follows_tool_requirements() {
         let toolchain = Toolchain {
             generators: Vec::new(),
+            backends: vec![super::super::profile::BuildBackend::Cpu],
+            default_backend: super::super::profile::BuildBackend::Cpu,
             tools: vec![
                 ToolStatus::found(ToolId::Cmake, "CMake", ToolRequirement::Required),
                 ToolStatus::found(ToolId::Msvc, "MSVC", ToolRequirement::Required),

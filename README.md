@@ -5,25 +5,27 @@
 <h1 align="center">LlamaPilot</h1>
 
 <p align="center">
-  Build, version, inspect, and run your own <code>llama.cpp</code> servers from one native Windows app.
+  Build, version, inspect, and run your own <code>llama.cpp</code> servers from one native app for Windows, macOS, and Linux.
 </p>
 
 <p align="center">
   <img alt="Windows" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows" />
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-13%2B-black?logo=apple" />
+  <img alt="Linux" src="https://img.shields.io/badge/Linux-Ubuntu%2022.04%20%7C%2024.04-E95420?logo=ubuntu" />
   <img alt="Tauri" src="https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri" />
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-000000?logo=rust" />
   <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111827" />
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green" />
 </p>
 
-LlamaPilot is a Windows-first desktop control panel for upstream
+LlamaPilot is a cross-platform desktop control panel for upstream
 [llama.cpp](https://github.com/ggml-org/llama.cpp). It manages the whole local serving workflow
 without hiding the tools underneath: clone a source, build `llama-server`, keep immutable runtime
 snapshots, discover what each binary supports, create launch profiles, and monitor the running
 server.
 
 It is deliberately **not a chat client** and **not another inference backend**. The process doing
-the work is your own `llama-server.exe`, built from the source and revision you choose.
+the work is your own `llama-server` (`llama-server.exe` on Windows), built from the source and revision you choose.
 
 <p align="center">
   <a href="docs/images/dashboard.png">
@@ -46,14 +48,14 @@ the work is your own `llama-server.exe`, built from the source and revision you 
 | Guessing whether a flag exists in your build | Controls generated from that binary's own `--help` output |
 | Manual Git, CMake, CUDA, and model bookkeeping | One guided desktop workflow with actionable errors |
 | A terminal full of mixed startup output | Searchable live logs, parsed facts, and untouched raw output |
-| Orphaned compilers or servers after cancellation | Windows Job Objects terminate the complete process tree |
+| Orphaned compilers or servers after cancellation | Platform supervisors terminate owned server and compiler groups |
 
 ## Highlights
 
 - **Own your runtime** — clone upstream llama.cpp or a fork, fetch remotes, switch branches, tags,
   and commits, and update with fast-forward-only safety.
-- **Build without a developer prompt** — detect Visual Studio, CMake, Ninja, and CUDA; build CPU
-  or CUDA profiles; retain live output; cancel the entire build tree safely.
+- **Build without a developer prompt** — detect native C++ tools, CMake, Ninja, and CUDA; build CPU,
+  CUDA, or Apple Metal profiles; retain live output; cancel the entire build tree safely.
 - **Never lose a working build** — every successful build becomes a self-describing, immutable
   runtime containing the executable, required libraries, metadata, and capability manifest.
 - **Use what the binary actually supports** — runtime controls come from `--version`, `--help`,
@@ -84,8 +86,16 @@ the work is your own `llama-server.exe`, built from the source and revision you 
 
 Download the installer from the [latest LlamaPilot release](https://github.com/empios/LlamaPilot/releases/latest):
 
-- `LlamaPilot_<version>_x64-setup.exe` — recommended interactive installer
-- `LlamaPilot_<version>_x64_en-US.msi` — MSI package for managed environments
+| Platform | Download | Backend support |
+| --- | --- | --- |
+| Windows 10/11 x64 | `*_x64-setup.exe` or `*_x64_en-US.msi` | CPU, NVIDIA CUDA |
+| macOS 13+ Apple Silicon | `*_aarch64.dmg` | CPU, Metal |
+| macOS 13+ Intel | `*_x64.dmg` | CPU |
+| Ubuntu 22.04/24.04 x64 | `*.AppImage` or `*_amd64.deb` | CPU, NVIDIA CUDA |
+
+On macOS, open the DMG and drag LlamaPilot to Applications. On Linux, make the AppImage
+executable before launching it, or install the Debian package with `sudo apt install ./<file>.deb`.
+See [platform support](docs/PLATFORM_SUPPORT.md) for prerequisites, signing status, and limitations.
 
 Packages are currently unsigned, so Microsoft Defender SmartScreen may show a warning. Verify that
 the download comes from `github.com/empios/LlamaPilot/releases` before running it.
@@ -94,7 +104,7 @@ the download comes from `github.com/empios/LlamaPilot/releases` before running i
 
 1. Open **Settings** and add one or more directories containing `.gguf` models.
 2. Open **Runtimes** and clone upstream llama.cpp or register an existing working copy.
-3. Open **Build**, choose CPU or CUDA, and build `llama-server`.
+3. Open **Build**, choose an available CPU, CUDA, or Metal backend, and build `llama-server`.
 4. Inspect the new runtime so LlamaPilot can discover its exact command surface.
 5. Open **Models**, verify the model and optional multimodal projector pairing. You can also choose
    **Hugging Face**, paste a public model repository URL or ID, and download an exact GGUF
@@ -117,7 +127,8 @@ the download comes from `github.com/empios/LlamaPilot/releases` before running i
 - Builds publish transactionally. Failed or cancelled work never replaces an existing runtime.
 - Environment overrides belong only to the launched child and never modify machine or user state.
 - Exactly one server is supervised at a time, and an active profile or runtime cannot be deleted.
-- Windows Job Objects use kill-on-close so app crashes cannot strand a server or build descendants.
+- Windows Job Objects use kill-on-close. Unix process groups and pipe watchdogs clean up owned
+  descendants after cancellation or parent exit; deliberately daemonized processes are outside that guarantee.
 
 ## Technology
 
@@ -135,43 +146,36 @@ reactive control surface rather than a privileged shell.
 
 ### Requirements
 
-- Windows 10 or 11 x64
-- Node.js 20+
-- Rust stable with the MSVC target
-- Git
-- Visual Studio 2022 with **Desktop development with C++** and CMake
-- Optional: CUDA Toolkit for CUDA builds of llama.cpp
+All platforms: Node.js 22+, Rust stable, Git, and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
 
-### Development
+- **Windows:** Visual Studio C++ workload and MSVC Rust target.
+- **macOS:** Apple Command Line Tools (`xcode-select --install`). Install CMake for llama.cpp builds.
+- **Linux:** C++ compiler, Make or Ninja, WebKitGTK 4.1 development libraries, and packaging tools.
+- **Optional:** NVIDIA CUDA Toolkit and driver for CUDA runtimes on Windows/Linux.
 
-```powershell
-git clone https://github.com/empios/LlamaPilot.git
-cd LlamaPilot
-npm install
+See [CONTRIBUTING.md](CONTRIBUTING.md) for exact setup commands.
+
+```sh
+npm ci
 npm run tauri dev
 ```
 
 ### Verification and installers
 
-```powershell
+```sh
+npm run check:version
 npm run typecheck
-npm test
+npm run test:coverage
 npm run build
-
-cd src-tauri
-cargo fmt -- --check
-cargo clippy --all-targets -- -D warnings
-cargo test
-
-cd ..
+cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+cargo test --locked --manifest-path src-tauri/Cargo.toml
 npm run tauri build
 ```
 
-The final command creates both NSIS and MSI packages under
-`src-tauri/target/release/bundle/`.
-
-Version tags matching `v*` run the Windows release workflow, which builds both installers and
-publishes them to GitHub Releases.
+The final command builds the host platform's packages under `src-tauri/target/release/bundle/`.
+Version tags run the desktop release workflow. All required packages must succeed before one
+complete GitHub Release is published. See [the release process](docs/RELEASING.md).
 
 ## Project status
 

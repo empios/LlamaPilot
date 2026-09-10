@@ -171,7 +171,7 @@ export function CommandPreviewPanel({
   error: unknown;
 }) {
   const [format, setFormat] = useState("command");
-  const content = format === "powershell" ? preview?.powershell : preview?.plain;
+  const content = format === "posix" ? preview?.posix : format === "powershell" ? preview?.powershell : preview?.plain;
   return (
     <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card">
       <header className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5">
@@ -205,6 +205,7 @@ export function CommandPreviewPanel({
               <div className="flex items-center justify-between gap-2">
                 <TabsList>
                   <TabsTrigger value="command">Command</TabsTrigger>
+                  {preview.posix ? <TabsTrigger value="posix">macOS / Linux shell</TabsTrigger> : null}
                   <TabsTrigger value="powershell">PowerShell</TabsTrigger>
                 </TabsList>
                 <Button
@@ -220,6 +221,9 @@ export function CommandPreviewPanel({
                 <pre className="mt-2 max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap break-all">
                   {preview.plain}
                 </pre>
+              </TabsContent>
+              <TabsContent value="posix">
+                <pre className="mt-2 max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap break-all">{preview.posix}</pre>
               </TabsContent>
               <TabsContent value="powershell">
                 <pre className="mt-2 max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap break-all">

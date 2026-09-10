@@ -190,7 +190,34 @@ pub async fn build(
         })?;
 
     let settings = state.settings.get();
-    let profile = apply_build_defaults(request.profile, settings.build.parallel_jobs);
+    let mut profile = apply_build_defaults(request.profile, settings.build.parallel_jobs);
+    let toolchain = super::detect::detect(&settings).await;
+    if !toolchain.backends.contains(&profile.backend) {
+        return Err(AppError::new(
+            ErrorCode::ConfigureFailed,
+            "This backend is not supported on this platform.",
+        ));
+    }
+    if !toolchain.can_build_cpu()
+        || (profile.backend == super::profile::BuildBackend::Cuda && !toolchain.can_build_cuda())
+    {
+        return Err(AppError::new(
+            ErrorCode::ConfigureFailed,
+            "The selected backend is missing required build tools.",
+        )
+        .with_hint("Open Build and follow the toolchain instructions, then re-detect."));
+    }
+    if !cfg!(windows)
+        && profile.generator.is_none()
+        && toolchain
+            .tool(super::toolchain::ToolId::Make)
+            .is_some_and(|tool| !tool.found)
+        && toolchain
+            .tool(super::toolchain::ToolId::Ninja)
+            .is_some_and(|tool| tool.found)
+    {
+        profile.generator = Some("Ninja".into());
+    }
     let builds_root = settings.builds_directory(&state.paths);
     let directory = build_directory(&builds_root, &source.name, &profile, std::env::consts::ARCH);
 
@@ -235,7 +262,7 @@ pub async fn build(
         state,
         &plan,
         &configuration,
-        reconfigure,
+        true,
         &permit,
         progress.clone(),
     )
@@ -389,7 +416,7 @@ fn classify_cmake_failure(
     {
         AppError::new(code, "CUDA support was requested but the CUDA toolset was not found.")
             .with_hint(
-                "Install the CUDA Toolkit, and make sure its Visual Studio integration was installed after Visual Studio.",
+                "Install the CUDA Toolkit. On Windows include Visual Studio integration; on Linux use a supported host compiler.",
             )
     } else if lowered.contains("no cmake_cuda_compiler could be found")
         || lowered.contains("nvcc") && lowered.contains("not found")
@@ -401,7 +428,7 @@ fn classify_cmake_failure(
         || lowered.contains("cl.exe") && lowered.contains("not found")
     {
         AppError::new(code, "No C++ compiler was found.").with_hint(
-            "Install the \"Desktop development with C++\" workload in the Visual Studio installer.",
+            "Install a C++ compiler: Apple Command Line Tools on macOS, build-essential on Ubuntu, or Desktop development with C++ in Visual Studio on Windows.",
         )
     } else if lowered.contains("generator") && lowered.contains("does not match") {
         AppError::new(

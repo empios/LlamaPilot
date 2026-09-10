@@ -190,11 +190,13 @@ impl ServerSupervisor {
         if let Some(directory) = &launch.command.working_directory {
             command.current_dir(directory);
         }
+        command.env("PATH", platform::tool_path());
         for (key, value) in &launch.command.environment {
             command.env(key, value);
         }
         platform::hide_console_window(&mut command);
 
+        group.prepare(&mut command);
         let mut child = match command.spawn() {
             Ok(child) => child,
             Err(error) => {
@@ -259,6 +261,7 @@ impl ServerSupervisor {
         })?;
 
         inner.snapshot.pid = Some(pid);
+        let exit_group = Arc::clone(&group);
         inner.active = Some(ActiveRun {
             generation,
             group,
@@ -293,6 +296,7 @@ impl ServerSupervisor {
         let exit_supervisor = Arc::clone(self);
         tokio::spawn(async move {
             let result = child.wait().await;
+            exit_group.release(pid);
             let _ = tokio::join!(stdout_task, stderr_task);
             exit_supervisor.handle_exit(generation, result).await;
         });

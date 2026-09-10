@@ -1,6 +1,6 @@
 # Architecture
 
-LlamaPilot is a Windows-first desktop control panel for upstream `llama.cpp`. It manages
+LlamaPilot is a cross-platform desktop control panel for upstream `llama.cpp`. It manages
 llama.cpp Git sources, builds `llama-server` binaries, snapshots them into immutable runtimes,
 discovers what each runtime supports, and launches/monitors the server process.
 
@@ -70,7 +70,7 @@ src-tauri/src/
     service.rs      orchestration: registry + git + safety rules
   hardware/         CPU, RAM, NVIDIA GPU snapshot
   logging/          tracing subscriber, rolling file log
-  platform/         Windows specifics (no console window, reveal in explorer, job objects)
+  platform/         OS process groups/watchdogs, Windows Job Objects, desktop tool lookup, folder reveal
   build/            (Phase 3) CMake toolchain detection, build execution, cancellation ownership
   runtime/          transactional snapshots, recovery metadata, capability re-inspection
   llama/            discovery runner, pure parsers, known-option registry, versioned sidecars
@@ -177,9 +177,10 @@ Git working copies and build trees are large and live wherever the user chooses 
 6. Capability manifests stay immutable. Loading may enrich their presentation metadata with the
    current known-option registry, but support still comes exclusively from flags and values saved
    from that runtime's own help output.
-7. One supervisor owns at most one server child. The child is adopted into a Windows Job Object
-   before it is exposed as active; stop, app exit, and supervisor drop terminate the complete
-   process tree. An active profile or runtime cannot be deleted.
+7. One supervisor owns at most one server child. The child is adopted into platform supervision
+   before it is exposed as active. Windows uses Job Objects; Unix uses process groups and
+   watchdogs, with the limitations described below. Stop, app exit, and supervisor drop
+   terminate owned processes. An active profile or runtime cannot be deleted.
 8. Server output is drained concurrently from stdout and stderr. Memory is capped at 10,000
    entries with an explicit dropped count; the per-run file receives the untouched line text.
    Timestamps, levels, streams, and parsed startup facts are side metadata, never rewrites.
@@ -204,3 +205,18 @@ benchmark over HTTP and verifies current llama-server timing fields. Performance
 candidate application, generation-first ranking, cancellation, and exclusive sweep ownership.
 Frontend tests cover state derivation, retained build output, capability and server payloads,
 candidate application, and per-strategy control selection.
+
+## macOS and Linux platform boundaries
+
+The shared runner resolves executables using the configured path or a PATH extended with standard
+desktop tool locations. Only child environments are changed. Unix commands lead their own process
+groups before exec; a forked pipe watchdog uses only async-signal-safe libc calls and kills the
+owned group on parent death or guard release. Groups are released immediately after wait to avoid
+retaining historical PIDs. Descendants that deliberately daemonize are outside the group guarantee.
+
+Build tool requirements and backend choices come from the Rust toolchain response. CPU explicitly
+disables CUDA/Metal; Metal embeds shader sources; static llama.cpp libraries are the default.
+Snapshot copying materializes symlinks and includes versioned shared libraries and Metal resources.
+POSIX and PowerShell previews are renderings only; execution continues to use argument arrays.
+Apple unified-memory dashboard values describe shared system RAM; optimizer budgets come from
+runtime device reports. See PLATFORM_SUPPORT.md for support and qualification boundaries.

@@ -1,0 +1,33 @@
+name: Bug report
+description: Report a reproducible LlamaPilot problem
+body:
+  - type: input
+    id: version
+    attributes:
+      label: LlamaPilot version and package
+      placeholder: 0.3.0, DMG / AppImage / Debian / NSIS / MSI
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: OS version, architecture, and desktop session
+      placeholder: macOS 15 arm64, or Ubuntu 24.04 x64 Wayland
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime backend, llama.cpp revision, and GPU
+      placeholder: CPU / CUDA / Metal; commit; GPU and driver/toolkit versions
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected behavior, and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant diagnostics
+      description: Include build/server logs after removing credentials or private paths.

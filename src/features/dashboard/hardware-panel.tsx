@@ -40,11 +40,11 @@ export function HardwarePanel() {
             />
             <StatTile
               icon={MicrochipIcon}
-              label="NVIDIA driver"
+              label={hardware.data.unifiedMemory ? "Apple GPU" : "NVIDIA driver"}
               mono
-              value={hardware.data.nvidiaDriver ?? "Not detected"}
+              value={hardware.data.unifiedMemory ? (hardware.data.gpus[0]?.name ?? "Not detected") : (hardware.data.nvidiaDriver ?? "Not detected")}
               detail={
-                hardware.data.nvidiaPresent
+                hardware.data.unifiedMemory ? "Metal · memory shared with CPU" : hardware.data.nvidiaPresent
                   ? `${hardware.data.gpus.length} ${pluralize(hardware.data.gpus.length, "GPU")} detected`
                   : "nvidia-smi did not report a GPU"
               }
@@ -54,7 +54,7 @@ export function HardwarePanel() {
           {hardware.data.gpus.length > 0 ? (
             <div className="flex flex-col gap-4 border-t border-border pt-5">
               <h3 className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-                Video memory
+                {hardware.data.unifiedMemory ? "Unified system memory (shared with GPU)" : "Video memory"}
               </h3>
               {hardware.data.gpus.map((gpu) => (
                 <MetricBar

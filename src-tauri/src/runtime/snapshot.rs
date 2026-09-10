@@ -23,6 +23,13 @@ const STAGING_MARKER: &str = ".staging-";
 /// Import libraries, PDBs, and CMake bookkeeping are excluded: they inflate the snapshot without
 /// being needed to run the server.
 fn is_runtime_artifact(path: &Path) -> bool {
+    if path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| name.contains(".so."))
+    {
+        return true;
+    }
     let Some(extension) = path.extension().and_then(|value| value.to_str()) else {
         // Extensionless files are Unix executables such as `llama-server`.
         return cfg!(not(windows));
@@ -30,7 +37,7 @@ fn is_runtime_artifact(path: &Path) -> bool {
 
     matches!(
         extension.to_ascii_lowercase().as_str(),
-        "exe" | "dll" | "so" | "dylib"
+        "exe" | "dll" | "so" | "dylib" | "metallib" | "metal"
     )
 }
 
@@ -218,6 +225,7 @@ pub fn stage_runtime(
         };
 
         let target = stage.staging_directory.join(name);
+        // Materialize symlinks so a snapshot never depends on its build directory.
         let copied = std::fs::copy(&path, &target).map_err(|error| {
             AppError::new(
                 ErrorCode::Io,

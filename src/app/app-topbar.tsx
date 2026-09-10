@@ -57,7 +57,7 @@ function GitStatus() {
           />
         </TooltipTrigger>
         <TooltipContent>
-          Install Git for Windows, or set an explicit path in Settings.
+          Install Git for your platform, or set an explicit path in Settings.
         </TooltipContent>
       </Tooltip>
     );
@@ -90,13 +90,13 @@ function GpuStatus() {
         <StatusChip
           tone={count > 0 ? "success" : "neutral"}
           label="GPU"
-          value={count > 0 ? `${count} NVIDIA` : "none detected"}
+          value={count > 0 ? `${count} ${hardware.data.unifiedMemory ? "Apple" : "NVIDIA"}` : "none detected"}
         />
       </TooltipTrigger>
       <TooltipContent>
         {count > 0
           ? hardware.data.gpus.map((gpu) => gpu.name).join(", ")
-          : "nvidia-smi did not report a GPU."}
+          : "No supported GPU was detected."}
       </TooltipContent>
     </Tooltip>
   );

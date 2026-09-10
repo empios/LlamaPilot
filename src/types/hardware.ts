@@ -22,6 +22,7 @@ export const hardwareSnapshotSchema = z.object({
   gpus: z.array(gpuInfoSchema),
   nvidiaDriver: z.string().nullish(),
   nvidiaPresent: z.boolean(),
+  unifiedMemory: z.boolean().optional(),
 });
 
 export type GpuInfo = z.infer<typeof gpuInfoSchema>;

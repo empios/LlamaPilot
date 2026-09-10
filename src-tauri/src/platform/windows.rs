@@ -76,6 +76,10 @@ impl ProcessGroup {
         })
     }
 
+    pub fn prepare(&self, _command: &mut Command) {}
+
+    pub fn release(&self, _process_id: u32) {}
+
     /// Adds an already-spawned process to the group.
     pub fn adopt(&self, process_id: u32) -> AppResult<()> {
         // SAFETY: the process id comes from a child we just spawned and still hold.

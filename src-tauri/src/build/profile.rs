@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub enum BuildBackend {
     Cpu,
     Cuda,
+    Metal,
 }
 
 impl BuildBackend {
@@ -14,6 +15,7 @@ impl BuildBackend {
         match self {
             BuildBackend::Cpu => "cpu",
             BuildBackend::Cuda => "cuda",
+            BuildBackend::Metal => "metal",
         }
     }
 
@@ -21,14 +23,20 @@ impl BuildBackend {
         match self {
             BuildBackend::Cpu => "CPU",
             BuildBackend::Cuda => "CUDA",
+            BuildBackend::Metal => "Metal",
         }
     }
 
     /// CMake definitions that select this backend, per upstream `docs/build.md`.
     pub fn definitions(self) -> Vec<(&'static str, &'static str)> {
         match self {
-            BuildBackend::Cpu => Vec::new(),
-            BuildBackend::Cuda => vec![("GGML_CUDA", "ON")],
+            BuildBackend::Cpu => vec![("GGML_CUDA", "OFF"), ("GGML_METAL", "OFF")],
+            BuildBackend::Cuda => vec![("GGML_CUDA", "ON"), ("GGML_METAL", "OFF")],
+            BuildBackend::Metal => vec![
+                ("GGML_CUDA", "OFF"),
+                ("GGML_METAL", "ON"),
+                ("GGML_METAL_EMBED_LIBRARY", "ON"),
+            ],
         }
     }
 }
@@ -80,7 +88,11 @@ pub struct BuildProfile {
 impl Default for BuildProfile {
     fn default() -> Self {
         Self {
-            backend: BuildBackend::Cuda,
+            backend: if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+                BuildBackend::Metal
+            } else {
+                BuildBackend::Cpu
+            },
             configuration: BuildConfiguration::Release,
             generator: None,
             parallel_jobs: None,

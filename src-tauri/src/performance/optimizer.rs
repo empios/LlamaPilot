@@ -47,7 +47,7 @@ pub fn build_plan(
 
     if devices.is_empty() {
         warnings.push(
-            "The selected runtime reported no accelerator devices. Inspect a CUDA runtime before generating a GPU plan."
+            "The selected runtime reported no accelerator devices. Inspect an accelerator-enabled runtime before generating a GPU plan."
                 .into(),
         );
     } else if devices.len() == 1 {
@@ -106,7 +106,8 @@ fn performance_devices(
         .map(|(position, device)| {
             let hardware = device_index(&device.id)
                 .and_then(|index| hardware_gpus.iter().find(|gpu| gpu.index == index))
-                .or_else(|| hardware_gpus.get(position));
+                .or_else(|| hardware_gpus.get(position))
+                .filter(|_| device.id.to_ascii_lowercase().starts_with("cuda"));
             PerformanceDevice {
                 id: device.id.clone(),
                 name: if device.name.trim().is_empty() {

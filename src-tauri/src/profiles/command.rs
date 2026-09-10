@@ -32,6 +32,7 @@ pub struct CommandPreview {
     pub environment: BTreeMap<String, String>,
     pub plain: String,
     pub powershell: String,
+    pub posix: String,
     pub runtime_label: String,
     pub model_name: String,
     pub capability_version: String,
@@ -115,6 +116,7 @@ pub(crate) fn build_profile_command(
     let environment = input.environment;
     let plain = command.to_display_string();
     let powershell = powershell_preview(&program, &arguments, &environment);
+    let posix = posix_preview(&program, &arguments, &environment);
     if input.auto_select_port {
         warnings.push(format!(
             "Port {} is the preferred port; the process supervisor may choose another free port when starting.",
@@ -128,6 +130,7 @@ pub(crate) fn build_profile_command(
         environment,
         plain,
         powershell,
+        posix,
         runtime_label: target.runtime_label.clone(),
         model_name: target.model_name.clone(),
         capability_version: capabilities.version.clone(),
@@ -581,5 +584,44 @@ mod tests {
             },
         );
         assert!(build_command_preview(core, &runtime(), &capabilities(), &target()).is_err());
+    }
+}
+
+fn posix_preview(
+    program: &str,
+    arguments: &[String],
+    environment: &BTreeMap<String, String>,
+) -> String {
+    fn quote(value: &str) -> String {
+        format!("'{}'", value.replace('\'', "'\"'\"'"))
+    }
+    let mut words = vec!["env".to_string()];
+    words.extend(
+        environment
+            .iter()
+            .map(|(key, value)| quote(&format!("{key}={value}"))),
+    );
+    words.push(quote(program));
+    words.extend(arguments.iter().map(|arg| quote(arg)));
+    words.join(" ")
+}
+
+#[cfg(all(test, unix))]
+mod posix_tests {
+    use super::*;
+    #[test]
+    fn shell_preview_round_trips_metacharacters_without_execution() {
+        let value = "space ' quote $HOME $(false) `false` ; *\nnext";
+        let preview = posix_preview(
+            "/usr/bin/printf",
+            &["%s".into(), value.into()],
+            &BTreeMap::new(),
+        );
+        let output = std::process::Command::new("/bin/sh")
+            .args(["-c", &preview])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(String::from_utf8(output.stdout).unwrap(), value);
     }
 }
