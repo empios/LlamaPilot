@@ -70,7 +70,6 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: ./src-tauri -> target
-          save-if: ${{ !cancelled() }}
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
