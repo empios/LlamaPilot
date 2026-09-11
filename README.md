@@ -24,8 +24,12 @@ without hiding the tools underneath: clone a source, build `llama-server`, keep 
 snapshots, discover what each binary supports, create launch profiles, and monitor the running
 server.
 
-It is deliberately **not a chat client** and **not another inference backend**. The process doing
-the work is your own `llama-server` (`llama-server.exe` on Windows), built from the source and revision you choose.
+Your own `llama-server` (`llama-server.exe` on Windows) runs inference, built from the source and
+revision you choose. Use CPU on every supported platform, Metal on Apple Silicon, or NVIDIA
+CUDA on Windows and Linux.
+
+**[Download LlamaPilot](https://github.com/empios/LlamaPilot/releases/latest)** ·
+[Platform support](docs/PLATFORM_SUPPORT.md) · [Build from source](#build-from-source)
 
 <p align="center">
   <a href="docs/images/dashboard.png">
@@ -84,21 +88,29 @@ the work is your own `llama-server` (`llama-server.exe` on Windows), built from 
 
 ### Install
 
-Download the installer from the [latest LlamaPilot release](https://github.com/empios/LlamaPilot/releases/latest):
+Native installers are available in [LlamaPilot v0.3.0](https://github.com/empios/LlamaPilot/releases/tag/v0.3.0).
+Choose the package matching your operating system and processor:
 
 | Platform | Download | Backend support |
 | --- | --- | --- |
-| Windows 10/11 x64 | `*_x64-setup.exe` or `*_x64_en-US.msi` | CPU, NVIDIA CUDA |
-| macOS 13+ Apple Silicon | `*_aarch64.dmg` | CPU, Metal |
-| macOS 13+ Intel | `*_x64.dmg` | CPU |
-| Ubuntu 22.04/24.04 x64 | `*.AppImage` or `*_amd64.deb` | CPU, NVIDIA CUDA |
+| Windows 10/11 x64 | [Setup EXE](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_x64-setup.exe) · [MSI](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_x64_en-US.msi) | CPU, NVIDIA CUDA |
+| macOS 13+ Apple Silicon | [DMG for Apple Silicon](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_aarch64.dmg) | CPU, Metal |
+| macOS 13+ Intel | [DMG for Intel](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_x64.dmg) | CPU |
+| Ubuntu 22.04/24.04 x64 | [AppImage](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_amd64.AppImage) · [Debian package](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_amd64.deb) | CPU, NVIDIA CUDA |
 
 On macOS, open the DMG and drag LlamaPilot to Applications. On Linux, make the AppImage
 executable before launching it, or install the Debian package with `sudo apt install ./<file>.deb`.
 See [platform support](docs/PLATFORM_SUPPORT.md) for prerequisites, signing status, and limitations.
 
-Packages are currently unsigned, so Microsoft Defender SmartScreen may show a warning. Verify that
-the download comes from `github.com/empios/LlamaPilot/releases` before running it.
+The v0.3.0 macOS apps are **ad-hoc signed, without Apple notarization**. Windows installers are
+unsigned and may trigger Microsoft Defender SmartScreen. Download from this repository's releases
+and compare the file's SHA-256 digest with
+[SHA256SUMS.txt](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/SHA256SUMS.txt).
+
+The installer contains the LlamaPilot app. To build and serve your first runtime, install **Git,
+CMake, and a native C++ compiler**, and choose a GGUF model. See the
+[platform setup instructions](CONTRIBUTING.md) for the required tools; CUDA additionally needs
+the NVIDIA toolkit and driver.
 
 ### First server
 
@@ -179,6 +191,12 @@ complete GitHub Release is published. See [the release process](docs/RELEASING.m
 
 ## Project status
 
+**v0.3.0 is released for Windows, macOS, and Linux.** CI tests and packages Windows x64,
+macOS Apple Silicon, macOS Intel, and Linux x64. CPU and Metal serving were also exercised on
+an Apple M4 Max. See [platform support](docs/PLATFORM_SUPPORT.md) and the
+[release validation notes](https://github.com/empios/LlamaPilot/releases/tag/v0.3.0) for the
+supported targets and remaining hardware and desktop qualification.
+
 The initial eight-phase implementation roadmap is complete:
 
 1. Native shell, settings, typed IPC, and structured errors
@@ -202,6 +220,8 @@ Bug reports and focused pull requests are welcome.
 
 ## Documentation
 
+- [Platform support](docs/PLATFORM_SUPPORT.md) — operating systems, architectures, backends,
+  installation, signing, and known limitations
 - [Architecture](docs/ARCHITECTURE.md) — modules, state ownership, persistence, errors, and safety
   invariants
 - [llama.cpp integration](docs/LLAMA_INTEGRATION.md) — verified upstream behavior behind sources,
