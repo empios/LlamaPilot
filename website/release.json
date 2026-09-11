@@ -1,0 +1,43 @@
+{
+  "tag_name": "v0.3.0",
+  "html_url": "https://github.com/empios/LlamaPilot/releases/tag/v0.3.0",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "LlamaPilot_0.3.0_aarch64.dmg",
+      "browser_download_url": "https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_aarch64.dmg",
+      "digest": "sha256:ea454dcdd76b1c62951e1f1a29ae9a2ac740db1764af5593032c4d23480e8013"
+    },
+    {
+      "name": "LlamaPilot_0.3.0_amd64.AppImage",
+      "browser_download_url": "https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_amd64.AppImage",
+      "digest": "sha256:959d080eae773149037e5b88eb637509ca91e8d5325feb8b2256899298521f87"
+    },
+    {
+      "name": "LlamaPilot_0.3.0_amd64.deb",
+      "browser_download_url": "https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_amd64.deb",
+      "digest": "sha256:f0d0c0c52dc47ac207d6de3efb3263373af5a5c6fe8b285f04bff7c73d12279d"
+    },
+    {
+      "name": "LlamaPilot_0.3.0_x64-setup.exe",
+      "browser_download_url": "https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_x64-setup.exe",
+      "digest": "sha256:d7edc5058e4bab9a3ba1964ff367320df4672eb4e57a016336875084fe68fd8b"
+    },
+    {
+      "name": "LlamaPilot_0.3.0_x64.dmg",
+      "browser_download_url": "https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_x64.dmg",
+      "digest": "sha256:6958a05921dd38f7d414545aff989b05fef8496ec6c67290cbec1f7cb94e05d5"
+    },
+    {
+      "name": "LlamaPilot_0.3.0_x64_en-US.msi",
+      "browser_download_url": "https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_x64_en-US.msi",
+      "digest": "sha256:5ba8b73a9369fc1bd45ee653d2bad9dd628e00d92a7592e252ab7f87afc8fe74"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "browser_download_url": "https://github.com/empios/LlamaPilot/releases/download/v0.3.0/SHA256SUMS.txt",
+      "digest": "sha256:e46e2bdcdf9519a54a808c41faff7b611accb2c6dbd7e4aee0e0cfb684f35a68"
+    }
+  ]
+}
