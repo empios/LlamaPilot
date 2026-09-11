@@ -12,7 +12,8 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "tauri": "tauri",
-    "check:version": "node scripts/check-version-sync.mjs"
+    "check:version": "node scripts/check-version-sync.mjs",
+    "site:build": "node scripts/build-site.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",

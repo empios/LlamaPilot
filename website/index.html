@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0e10" />
+    <meta
+      name="description"
+      content="Your local AI, under your control. Build, manage, and run llama.cpp models with LlamaPilot, a free desktop app for macOS, Windows, and Linux."
+    />
+    <meta property="og:title" content="LlamaPilot — Local AI. Your control." />
+    <meta
+      property="og:description"
+      content="One native desktop app to build your runtime, manage your models, and serve local AI. Free and open source."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://empios.github.io/LlamaPilot/" />
+    <meta
+      property="og:image"
+      content="https://empios.github.io/LlamaPilot/assets/dashboard.png"
+    />
+    <link rel="canonical" href="https://empios.github.io/LlamaPilot/" />
+    <link rel="icon" href="assets/icon.png" type="image/png" />
+    <link
+      rel="preload"
+      href="assets/geist-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+    <title>LlamaPilot — Local AI. Your control.</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container nav-row">
+        <a href="#" class="brand" aria-label="LlamaPilot home"
+          ><img src="assets/icon.png" width="31" height="31" alt="" /><span
+            >Llama<span class="brand-light">Pilot</span></span
+          ></a
+        >
+        <nav aria-label="Main navigation">
+          <a href="#workflow">The workflow</a>
+          <a href="#features">Features</a>
+          <a href="https://github.com/empios/LlamaPilot" class="nav-repo"
+            >GitHub <span aria-hidden="true">↗</span></a
+          >
+        </nav>
+        <a href="#downloads" class="button button-small"
+          >Download <span aria-hidden="true">↓</span></a
+        >
+      </div>
+    </header>
+    <main id="main">
+      <section class="hero container" aria-labelledby="hero-heading">
+        <div class="hero-copy">
+          <a class="release-pill" href="{{releaseUrl}}"
+            ><span class="status-dot"></span>{{version}} is here
+            <span class="pill-divider"></span> Now on macOS &amp; Linux
+            <span aria-hidden="true">↗</span></a
+          >
+          <p class="eyebrow hero-eyebrow">YOUR LOCAL AI CONTROL CENTER</p>
+          <h1 id="hero-heading">
+            Your models.<br />Your machine.<br /><span>Your control.</span>
+          </h1>
+          <p class="hero-description">
+            Take the controls of <strong>llama.cpp</strong>. Build your runtime,
+            manage your models, and run local AI from one native desktop app.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="#downloads"
+              >Get LlamaPilot <span aria-hidden="true">↓</span></a
+            ><a class="text-link" href="https://github.com/empios/LlamaPilot"
+              >Explore the source <span aria-hidden="true">↗</span></a
+            >
+          </div>
+          <p class="hero-note">
+            <span class="tiny-check" aria-hidden="true">✓</span> Free &amp; open
+            source <span>·</span> macOS, Windows &amp; Linux
+          </p>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="visual-grid"></div>
+          <div class="visual-label">
+            <span class="status-dot"></span> LOCAL INFERENCE
+            <span class="label-right">01 / ACTIVE</span>
+          </div>
+          <img
+            class="neural-orb"
+            src="assets/neural-orb.svg"
+            width="620"
+            height="600"
+            alt=""
+          />
+          <span class="orb-tag tag-model">GGUF <span>MODEL</span></span>
+          <span class="orb-tag tag-runtime"
+            >llama.cpp <span>RUNTIME</span></span
+          >
+          <div class="terminal-card">
+            <div class="terminal-top">
+              <span class="terminal-dots">● ● ●</span
+              ><span>your-machine / llama-server</span><span>↗</span>
+            </div>
+            <div class="terminal-code">
+              <span class="terminal-prompt">›</span> load model<br /><span
+                class="terminal-prompt"
+                >›</span
+              >
+              select runtime<br /><span class="terminal-prompt">›</span> start
+              server<span class="cursor"></span>
+            </div>
+            <div class="terminal-bottom">
+              <span class="status-dot"></span> Your hardware. Your endpoint.
+            </div>
+          </div>
+          <div class="visual-caption">
+            <span>RUN LOCALLY</span><span>BUILD → INSPECT → SERVE</span>
+          </div>
+        </div>
+      </section>
+      <div class="compatibility container" aria-label="Supported technologies">
+        <span class="mono">BUILT AROUND YOUR STACK</span>
+        <div>
+          <span>llama.cpp</span><span class="stack-divider">/</span
+          ><span>GGUF</span><span class="stack-divider">/</span
+          ><span>Apple Metal</span><span class="stack-divider">/</span
+          ><span>NVIDIA CUDA</span><span class="stack-divider">/</span
+          ><span>CPU</span>
+        </div>
+      </div>
+
+      <section
+        class="section container"
+        id="workflow"
+        aria-labelledby="workflow-heading"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">FROM SOURCE TO SERVER</p>
+            <h2 id="workflow-heading">
+              Less terminal juggling.<br />More running models.
+            </h2>
+          </div>
+          <p>
+            Keep every step of your local inference workflow in one place, with
+            the tools you already trust.
+          </p>
+        </div>
+        <div class="workflow-steps">
+          <article>
+            <span class="step-number">01 <span>↗</span></span>
+            <h3>Build your runtime</h3>
+            <p>
+              Choose a llama.cpp revision and a CPU, CUDA, or Metal backend.
+              Keep working builds as immutable snapshots.
+            </p>
+          </article>
+          <article>
+            <span class="step-number">02 <span>↗</span></span>
+            <h3>Bring your models</h3>
+            <p>
+              Connect your GGUF folders or download an exact model from Hugging
+              Face. Create a profile for the way you want to run it.
+            </p>
+          </article>
+          <article>
+            <span class="step-number">03 <span>↗</span></span>
+            <h3>Take the controls</h3>
+            <p>
+              Start your server, follow its logs, tune performance, and connect
+              coding agents through an OpenAI-compatible endpoint.
+            </p>
+          </article>
+        </div>
+        <figure class="app-preview">
+          <div class="preview-toolbar">
+            <div>
+              <span class="status-dot"></span> ONE APP. THE WHOLE WORKFLOW.
+            </div>
+            <span>LLAMAPILOT / DASHBOARD</span>
+          </div>
+          <img
+            src="assets/dashboard.png"
+            alt="LlamaPilot dashboard with server controls, runtime sources, and CPU, memory, and NVIDIA GPU information"
+            width="1368"
+            height="931"
+            loading="lazy"
+          />
+          <figcaption>
+            Real tools. A clearer view. <span>Dashboard interface preview</span>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section
+        class="section features-section"
+        id="features"
+        aria-labelledby="features-heading"
+      >
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">POWER WITHOUT THE GUESSWORK</p>
+              <h2 id="features-heading">
+                Built for the details<br />that actually matter.
+              </h2>
+            </div>
+            <a
+              class="text-link"
+              href="https://github.com/empios/LlamaPilot#highlights"
+              >All capabilities <span aria-hidden="true">↗</span></a
+            >
+          </div>
+          <div class="feature-grid">
+            <article class="feature-card feature-wide">
+              <div class="feature-icon" aria-hidden="true">⌘</div>
+              <h3>Your runtime is the source of truth.</h3>
+              <p>
+                Controls come from your binary’s own capabilities. See exactly
+                which flags your build supports, with launch previews you can
+                inspect before pressing Start.
+              </p>
+              <div class="code-line">
+                <span>llama-server</span>
+                <span class="code-muted">--model</span> your-model.gguf
+                <span class="code-muted">--port</span> 8080
+              </div>
+              <div class="feature-tags">
+                <span>Capability discovery</span
+                ><span>Exact command previews</span>
+              </div>
+            </article>
+            <article class="feature-card">
+              <div class="feature-icon" aria-hidden="true">↗</div>
+              <h3>Find your faster.</h3>
+              <p>
+                Compare real coding-prompt timings in Performance Lab. Auto-tune
+                tests supported GPU placements and saves the fastest successful
+                configuration.
+              </p>
+              <div class="signal-bars" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
+                ><i></i><i></i><i></i>
+              </div>
+              <span class="mono feature-footnote">MEASURE. COMPARE. TUNE.</span>
+            </article>
+            <article class="feature-card">
+              <div class="feature-icon" aria-hidden="true">⇄</div>
+              <h3>Plug into your workflow.</h3>
+              <p>
+                Check your server connection, then copy ready-to-use settings
+                for OpenCode, Pi, Aider, or an OpenAI-compatible client.
+              </p>
+              <div class="feature-tags">
+                <span>OpenCode</span><span>Pi</span><span>Aider</span>
+              </div>
+            </article>
+            <article class="feature-card feature-wide">
+              <div class="feature-icon" aria-hidden="true">◎</div>
+              <h3>Keep a working build. Always.</h3>
+              <p>
+                Immutable runtime snapshots keep your known-good binaries ready
+                to run. Supervised processes, clear health checks, and
+                searchable logs put you in control from startup to shutdown.
+              </p>
+              <div class="runtime-flow" aria-hidden="true">
+                <span><i></i> Source</span><b>→</b><span><i></i> Snapshot</span
+                ><b>→</b><span class="runtime-active"><i></i> Serving</span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="section downloads container"
+        id="downloads"
+        aria-labelledby="downloads-heading"
+      >
+        <div class="download-heading">
+          <p class="eyebrow">READY WHEN YOU ARE</p>
+          <h2 id="downloads-heading">Your next model<br />starts here.</h2>
+          <p>Choose your platform. Take the controls.</p>
+          <a class="version-label" href="{{releaseUrl}}"
+            ><span class="status-dot"></span> {{version}}
+            <span>Latest stable release ↗</span></a
+          >
+        </div>
+        <div class="download-grid">
+          <article class="download-card" id="download-macos">
+            <div class="platform-heading">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M17.2 12.7c0-2 1.7-3 1.8-3.1-1-1.5-2.6-1.7-3.2-1.7-1.4-.2-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.6 0-3 .9-3.8 2.2-1.6 2.8-.4 6.9 1.2 9.2.8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3.1-.7 1.4 0 1.8.7 3.1.7 1.3 0 2.1-1.1 2.9-2.2.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.9-1.1-2.9-3.9ZM14.9 6.4c.6-.8 1.1-1.9 1-3-.9 0-2 .6-2.7 1.4-.6.7-1.2 1.8-1.1 2.9 1 .1 2.1-.5 2.8-1.3Z"
+                /></svg
+              ><span class="mono">01 / MACOS</span>
+            </div>
+            <h3>Made for your Mac.</h3>
+            <p class="platform-description">
+              macOS 13 or later<br />Apple Silicon &amp; Intel
+            </p>
+            <div class="backend-tags">
+              <span>CPU</span><span>Metal on Apple Silicon</span>
+            </div>
+            <a class="button download-primary" href="{{macArm}}"
+              >Apple Silicon <span>DMG ↓</span></a
+            ><a class="button button-secondary" href="{{macIntel}}"
+              >Intel Mac <span>DMG ↓</span></a
+            >
+            <p class="download-detail">Ad-hoc signed · Not Apple-notarized</p>
+          </article>
+          <article class="download-card" id="download-windows">
+            <div class="platform-heading">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="m2 4 9-1.3V11H2V4Zm10-1.5L22 1v10H12V2.5ZM2 12h9v8.3L2 19v-7Zm10 0h10v10l-10-1.5V12Z"
+                /></svg
+              ><span class="mono">02 / WINDOWS</span>
+            </div>
+            <h3>Put your GPU to work.</h3>
+            <p class="platform-description">
+              Windows 10 or 11<br />x64 processors
+            </p>
+            <div class="backend-tags">
+              <span>CPU</span><span>NVIDIA CUDA</span>
+            </div>
+            <a class="button download-primary" href="{{windowsExe}}"
+              >Windows Setup <span>EXE ↓</span></a
+            ><a class="button button-secondary" href="{{windowsMsi}}"
+              >Windows Installer <span>MSI ↓</span></a
+            >
+            <p class="download-detail">Unsigned · SmartScreen may prompt</p>
+          </article>
+          <article class="download-card" id="download-linux">
+            <div class="platform-heading">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+                <path
+                  d="M8 17c-1-2-2-2-2-4s2-3 2-5c0-4 2-6 4-6s4 2 4 6c0 2 2 3 2 5s-1 2-2 4M8 17l-4 3 5 1 3-2 3 2 5-1-4-3M9 10l3 2 3-2M10 7v1m4-1v1M9 14c0 3 1 4 3 4s3-1 3-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                /></svg
+              ><span class="mono">03 / LINUX</span>
+            </div>
+            <h3>At home on Linux.</h3>
+            <p class="platform-description">
+              Ubuntu 22.04 / 24.04<br />x64 processors
+            </p>
+            <div class="backend-tags">
+              <span>CPU</span><span>NVIDIA CUDA</span>
+            </div>
+            <a class="button download-primary" href="{{linuxAppImage}}"
+              >Linux AppImage <span>↓</span></a
+            ><a class="button button-secondary" href="{{linuxDeb}}"
+              >Debian Package <span>DEB ↓</span></a
+            >
+            <p class="download-detail">Make the AppImage executable to run</p>
+          </article>
+        </div>
+        <div class="download-meta">
+          <p>
+            <span aria-hidden="true">⌁</span> Each installer contains
+            LlamaPilot. Bring a GGUF model and install Git, CMake, and a C++
+            compiler to build your runtime.
+          </p>
+          <div>
+            <a href="{{checksums}}">SHA-256 checksums ↗</a
+            ><a
+              href="https://github.com/empios/LlamaPilot/blob/main/docs/PLATFORM_SUPPORT.md"
+              >Setup &amp; platform support ↗</a
+            ><a href="https://github.com/empios/LlamaPilot/releases"
+              >All versions ↗</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="open-source-section container"
+        aria-labelledby="open-source-heading"
+      >
+        <div>
+          <p class="eyebrow">OPEN SOURCE. OPEN POSSIBILITIES.</p>
+          <h2 id="open-source-heading">
+            Built in the open.<br />Ready to make your own.
+          </h2>
+          <p>
+            LlamaPilot is free software under the MIT license.<br />Inspect the
+            code, report an issue, or help shape what comes next.
+          </p>
+        </div>
+        <a
+          class="button button-secondary"
+          href="https://github.com/empios/LlamaPilot"
+          >Find us on GitHub <span aria-hidden="true">↗</span></a
+        >
+      </section>
+    </main>
+    <footer class="site-footer container">
+      <a class="brand" href="#" aria-label="LlamaPilot home"
+        ><img src="assets/icon.png" width="27" height="27" alt="" /><span
+          >Llama<span class="brand-light">Pilot</span></span
+        ></a
+      >
+      <p>
+        made with <span aria-label="llama">🦙</span> by
+        <a href="https://github.com/empios">empios</a>
+      </p>
+      <div>
+        <a href="https://github.com/empios/LlamaPilot">Repository ↗</a
+        ><a href="https://github.com/empios/LlamaPilot/blob/main/LICENSE"
+          >MIT License ↗</a
+        >
+      </div>
+    </footer>
+  </body>
+</html>

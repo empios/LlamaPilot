@@ -29,6 +29,7 @@ revision you choose. Use CPU on every supported platform, Metal on Apple Silicon
 CUDA on Windows and Linux.
 
 **[Download LlamaPilot](https://github.com/empios/LlamaPilot/releases/latest)** ·
+[Website](https://empios.github.io/LlamaPilot/) ·
 [Platform support](docs/PLATFORM_SUPPORT.md) · [Build from source](#build-from-source)
 
 <p align="center">
