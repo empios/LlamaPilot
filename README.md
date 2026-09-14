@@ -116,9 +116,9 @@ CMake, and a native C++ compiler**, and choose a GGUF model. See the
 [platform setup instructions](CONTRIBUTING.md) for the required tools; CUDA additionally needs
 the NVIDIA toolkit and driver.
 
-### Application updates (next release)
+### Application updates
 
-The next release adds **Settings → Updates**. Checks run at startup and every 24 hours while
+Version 0.4.0 adds **Settings → Updates**. Checks run at startup and every 24 hours while
 the app is open. Background downloads and installation when idle are optional. Automatic
 installation shows a 30-second restart countdown and waits for servers, builds, downloads,
 benchmarks and open editors to finish. Choose **Later** to defer that version for the session.

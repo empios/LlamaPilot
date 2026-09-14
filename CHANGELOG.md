@@ -4,7 +4,7 @@ Notable changes to LlamaPilot are documented here. The project follows semantic 
 it is practical; before 1.0, minor releases may contain intentional breaking changes to persisted
 development data.
 
-## Unreleased
+## 0.4.0 — 2026-09-14
 
 ### Added
 
