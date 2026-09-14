@@ -1,5 +1,8 @@
-LlamaPilot 0.4.0 adds signed application updates in Settings, optional background downloads
+LlamaPilot 0.4.1 adds signed application updates in Settings, optional background downloads
 and installation when idle, and refreshed Paper/Terminal desktop themes.
+
+It also fixes macOS updater packaging and checks each build for missing packages and signatures
+before upload. The earlier v0.4.0 publication was stopped before a release was created.
 
 Users of the original v0.3.0 release must install this version manually. Local v0.3.0
 installers built with the production updater key can discover this release through Settings.

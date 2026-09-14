@@ -4,7 +4,19 @@ Notable changes to LlamaPilot are documented here. The project follows semantic 
 it is practical; before 1.0, minor releases may contain intentional breaking changes to persisted
 development data.
 
-## 0.4.0 — 2026-09-14
+## 0.4.1 — 2026-09-14
+
+### Fixed
+
+- Include the macOS app bundle target so release builds produce signed `.app.tar.gz`
+  updater archives alongside DMGs on both architectures.
+- Reject missing updater packages or signatures before uploading build artifacts.
+
+This release includes the changes below from the unpublished 0.4.0 attempt.
+
+## 0.4.0 — not published
+
+The version tag remains available, but publication was blocked by missing macOS updater archives.
 
 ### Added
 

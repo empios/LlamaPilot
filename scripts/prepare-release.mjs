@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { verifyUpdaterSignature, readPublicKey } from './updater-signature.mjs';
 
-const targets = [
+export const releaseTargets = [
   { target: 'x86_64-pc-windows-msvc', platform: 'windows-x86_64', arch: 'x64', formats: ['exe', 'msi'], updater: 'exe' },
   { target: 'aarch64-apple-darwin', platform: 'darwin-aarch64', arch: 'aarch64', formats: ['dmg', 'app.tar.gz'], updater: 'app.tar.gz' },
   { target: 'x86_64-apple-darwin', platform: 'darwin-x86_64', arch: 'x64', formats: ['dmg', 'app.tar.gz'], updater: 'app.tar.gz' },
@@ -27,7 +27,7 @@ export function prepareRelease(root, { version, publicKey, notes = '', repositor
     if (assets.has(name)) throw new Error(`Duplicate asset name: ${name}`);
     assets.set(name, bytes);
   };
-  for (const spec of targets) {
+  for (const spec of releaseTargets) {
     const files = walk(path.join(root, `installers-${spec.target}`));
     const metadata = files.filter((file) => path.basename(file) === 'updater-build.json');
     if (metadata.length !== 1) throw new Error(`Missing or duplicate build metadata: ${spec.target}`);

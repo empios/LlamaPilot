@@ -6,6 +6,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { prepareRelease } from './prepare-release.mjs';
 import { verifyUpdaterSignature } from './updater-signature.mjs';
+import { writeReleaseMetadata } from './write-release-metadata.mjs';
+
+test('macOS packaging enables both the disk image and the updater app target', () => {
+  const config = JSON.parse(readFileSync(new URL('../src-tauri/tauri.macos.conf.json', import.meta.url), 'utf8'));
+  assert.ok(config.bundle.targets.includes('dmg'));
+  assert.ok(config.bundle.targets.includes('app'), 'DMG alone does not generate a signed updater archive');
+});
 
 function signer() {
   const { privateKey, publicKey } = generateKeyPairSync('ed25519');
@@ -66,6 +73,25 @@ test('missing signature fails before any output is created', () => {
   unlinkSync(f.files[0] + '.sig');
   assert.throws(() => prepareRelease(f.root, f.options));
   assert.equal(existsSync(path.join(f.root, 'final')), false);
+});
+
+test('build provenance rejects missing macOS updater archives and signatures before upload', () => {
+  for (const suffix of ['', '.sig']) {
+    const f = fixture();
+    const directory = path.join(f.root, 'installers-aarch64-apple-darwin');
+    unlinkSync(path.join(directory, 'updater-build.json'));
+    unlinkSync(path.join(directory, `LlamaPilot.app.tar.gz${suffix}`));
+    assert.throws(() => writeReleaseMetadata(directory, { target: 'aarch64-apple-darwin', version: '0.4.0' }), /app\.tar\.gz/);
+    assert.equal(existsSync(path.join(directory, 'updater-build.json')), false);
+  }
+});
+
+test('build provenance for complete signed packages is accepted by the publisher', () => {
+  const f = fixture();
+  for (const target of ['x86_64-pc-windows-msvc', 'aarch64-apple-darwin', 'x86_64-apple-darwin', 'x86_64-unknown-linux-gnu']) {
+    writeReleaseMetadata(path.join(f.root, `installers-${target}`), { target, version: '0.4.0' });
+  }
+  assert.equal(Object.keys(prepareRelease(f.root, f.options).platforms).length, 4);
 });
 
 test('corrupted download and wrong signing key are rejected', () => {
