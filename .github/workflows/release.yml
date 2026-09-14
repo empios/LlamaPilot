@@ -28,7 +28,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
           path: .release-tools
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -71,7 +71,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
           path: .release-tools
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -154,7 +154,7 @@ jobs:
         with:
           pattern: installers-*
           path: release-artifacts
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Verify packages and generate checksums
