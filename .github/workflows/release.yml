@@ -23,6 +23,11 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.ref_name }}
           fetch-depth: 0
+      - name: Check out release tooling from the workflow commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          path: .release-tools
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -41,6 +46,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:release
+      - run: node --test .release-tools/scripts/prepare-release.test.mjs
   build:
     needs: validate
     strategy:
@@ -60,6 +66,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.validate.outputs.tag }}
+      - name: Check out release tooling from the workflow commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          path: .release-tools
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -104,7 +115,7 @@ jobs:
         with:
           args: --target ${{ matrix.target }} --config src-tauri/tauri.updater.local.json
       - name: Record build provenance
-        run: node scripts/write-release-metadata.mjs ${{ matrix.target }}
+        run: node .release-tools/scripts/write-release-metadata.mjs ${{ matrix.target }}
       - name: Verify macOS disk image and bundle signature
         if: runner.os == 'macOS'
         shell: bash
@@ -134,6 +145,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.validate.outputs.tag }}
+      - name: Check out release tooling from the workflow commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          path: .release-tools
       - uses: actions/download-artifact@v4
         with:
           pattern: installers-*
@@ -145,7 +161,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
           TAURI_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
-        run: node scripts/prepare-release.mjs release-artifacts
+        run: node .release-tools/scripts/prepare-release.mjs release-artifacts
       - name: Publish one complete release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

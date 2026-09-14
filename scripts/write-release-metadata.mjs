@@ -11,9 +11,10 @@ export function writeReleaseMetadata(directory, { target, version }) {
   function walk(dir) {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const file = path.join(dir, entry.name);
-      if (entry.isSymbolicLink()) throw new Error(`Unexpected symlink: ${file}`);
-      // App bundles can contain framework symlinks. Only their signed archive is published.
-      if (entry.isDirectory() && !entry.name.endsWith('.app')) walk(file);
+      // Packaging leaves staging trees and links beside the final packages. Do not
+      // follow them or mistake their contents for files uploaded to the release.
+      if (entry.isSymbolicLink()) continue;
+      if (entry.isDirectory() && !/\.(app|AppDir)$/.test(entry.name)) walk(file);
       else if (entry.isFile() && /\.(dmg|deb|AppImage|exe|msi|app\.tar\.gz)$/.test(entry.name)) {
         if (files.has(entry.name)) throw new Error(`Duplicate package name: ${entry.name}`);
         files.set(entry.name, file);

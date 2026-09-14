@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, randomBytes, sign, createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, unlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, unlinkSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { prepareRelease } from './prepare-release.mjs';
@@ -92,6 +92,23 @@ test('build provenance for complete signed packages is accepted by the publisher
     writeReleaseMetadata(path.join(f.root, `installers-${target}`), { target, version: '0.4.0' });
   }
   assert.equal(Object.keys(prepareRelease(f.root, f.options).platforms).length, 4);
+});
+
+test('build provenance ignores AppImage staging directories and never follows symlinks', () => {
+  const f = fixture();
+  const directory = path.join(f.root, 'installers-x86_64-unknown-linux-gnu');
+  const staging = path.join(directory, 'LlamaPilot.AppDir');
+  mkdirSync(staging);
+  writeFileSync(path.join(staging, 'intermediate.AppImage'), 'not a release package');
+  const unrelated = path.join(f.root, 'unrelated');
+  mkdirSync(unrelated);
+  writeFileSync(path.join(unrelated, 'external.AppImage'), 'not a release package');
+  symlinkSync(unrelated, path.join(directory, 'staging-link'), 'junction');
+  writeReleaseMetadata(directory, { target: 'x86_64-unknown-linux-gnu', version: '0.4.0' });
+  const metadata = JSON.parse(readFileSync(path.join(directory, 'updater-build.json'), 'utf8'));
+  assert.deepEqual(Object.keys(metadata.packages).sort(), [
+    'LlamaPilot_0.4.0_amd64_setup.AppImage', 'LlamaPilot_0.4.0_amd64_setup.deb',
+  ]);
 });
 
 test('corrupted download and wrong signing key are rejected', () => {

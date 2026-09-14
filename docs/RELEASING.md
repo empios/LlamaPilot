@@ -27,6 +27,13 @@ One final job creates a draft, uploads all assets, and publishes it. A failed bu
 previous release untouched. Failed uploads leave a draft that can be retried. A rerun refuses to
 overwrite an already published release; fixes require a new version.
 
+For an unpublished tag whose application source is correct, packaging-validation or publishing
+script fixes can be retried by dispatching the release workflow from `main` with that existing
+tag. Application source, version, and build configuration still come from the immutable tag;
+release validation tools come from the dispatch commit in `.release-tools` and their tests run
+before packaging. This allows pipeline repairs without moving version tags. Changes to the app
+or its build configuration require a new version tag.
+
 ## macOS signing
 
 The macOS configuration defaults to ad-hoc signing (`-`) without notarization. APPLE_SIGNING_IDENTITY overrides it when a Developer ID is configured. Configure
