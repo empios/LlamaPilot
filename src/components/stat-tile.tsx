@@ -28,14 +28,19 @@ export function StatTile({
   className,
 }: StatTileProps) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1", className)}>
+    <div
+      className={cn(
+        "flex min-w-0 flex-col gap-1 rounded-lg border border-border bg-card px-[18px] py-4 shadow-[var(--pg-shadow-01)]",
+        className,
+      )}
+    >
       <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
         {Icon ? <Icon className="size-3.5 shrink-0" /> : null}
         <span className="truncate">{label}</span>
       </div>
       <div
         className={cn(
-          "line-clamp-2 text-base leading-snug font-semibold text-balance",
+          "line-clamp-2 text-xl leading-snug font-light tracking-[-0.01em] text-balance",
           mono && "font-mono text-sm",
         )}
       >
@@ -61,8 +66,7 @@ export function StatGrid({
   return (
     <div
       className={cn(
-        "grid items-start gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4",
-        "lg:divide-x lg:divide-border lg:*:not-first:pl-6",
+        "grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-4",
         className,
       )}
     >

@@ -52,6 +52,7 @@ pub enum ErrorCode {
     BenchmarkInProgress,
     BenchmarkCancelled,
     Unsupported,
+    UpdateBusy,
     Internal,
 }
 

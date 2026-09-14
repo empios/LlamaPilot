@@ -1,3 +1,4 @@
+import { UpdateSettings } from "@/features/settings/update-settings";
 import { RotateCcwIcon } from "lucide-react";
 
 import { ErrorPanel } from "@/components/error-panel";
@@ -41,7 +42,11 @@ export function SettingsPage() {
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="paths">Paths</TabsTrigger>
             <TabsTrigger value="tooling">Tooling</TabsTrigger>
+            <TabsTrigger value="updates">Updates</TabsTrigger>
           </TabsList>
+          <TabsContent value="updates">
+            <UpdateSettings settings={settings.data} />
+          </TabsContent>
           <TabsContent value="general">
             <GeneralSettings settings={settings.data} />
           </TabsContent>

@@ -5,6 +5,7 @@ vi.mock("@/app/app-sidebar", () => ({ AppSidebar: () => <aside>Sidebar</aside> }
 vi.mock("@/app/app-topbar", () => ({ AppTopbar: () => <header>Topbar</header> }));
 vi.mock("@/hooks/use-theme-sync", () => ({ useThemeSync: vi.fn() }));
 vi.mock("@/hooks/use-server", () => ({ useServerEventBridge: vi.fn() }));
+vi.mock("@/features/settings/update-bridge", () => ({ UpdateBridge: () => null }));
 vi.mock("@/features/dashboard/dashboard-page", () => ({
   DashboardPage: () => <div>Dashboard page</div>,
 }));

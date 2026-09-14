@@ -22,6 +22,7 @@ pub async fn add_existing_source(
     directory: PathBuf,
     name: Option<String>,
 ) -> AppResult<LlamaSource> {
+    let _work = state.work.enter()?;
     service::add_existing(&state, &directory, name).await
 }
 
@@ -31,6 +32,7 @@ pub async fn clone_source(
     request: CloneRequest,
     on_progress: Channel<ProgressEvent>,
 ) -> AppResult<LlamaSource> {
+    let _work = state.work.enter()?;
     let sink = progress::forward_to_channel(on_progress.clone(), "Cloning repository");
     let outcome = service::clone(&state, request, sink).await;
 
@@ -44,11 +46,13 @@ pub fn remove_source(
     id: String,
     delete_directory: bool,
 ) -> AppResult<()> {
+    let _work = state.work.enter()?;
     service::remove(&state, &id, delete_directory)
 }
 
 #[tauri::command]
 pub async fn get_source_status(state: State<'_, AppState>, id: String) -> AppResult<SourceStatus> {
+    let _work = state.work.enter()?;
     service::status(&state, &id).await
 }
 
@@ -59,6 +63,7 @@ pub async fn fetch_source(
     remote: Option<String>,
     on_progress: Channel<ProgressEvent>,
 ) -> AppResult<()> {
+    let _work = state.work.enter()?;
     let sink = progress::forward_to_channel(on_progress.clone(), "Fetching from remote");
     let outcome = service::fetch(&state, &id, remote.as_deref(), sink).await;
 
@@ -68,11 +73,13 @@ pub async fn fetch_source(
 
 #[tauri::command]
 pub async fn update_source(state: State<'_, AppState>, id: String) -> AppResult<UpdateOutcome> {
+    let _work = state.work.enter()?;
     service::update(&state, &id).await
 }
 
 #[tauri::command]
 pub async fn list_source_refs(state: State<'_, AppState>, id: String) -> AppResult<SourceRefs> {
+    let _work = state.work.enter()?;
     service::refs(&state, &id).await
 }
 
@@ -82,6 +89,7 @@ pub async fn switch_source_ref(
     id: String,
     target: String,
 ) -> AppResult<SwitchRefOutcome> {
+    let _work = state.work.enter()?;
     service::switch_ref(&state, &id, &target).await
 }
 
@@ -90,6 +98,7 @@ pub async fn list_source_remotes(
     state: State<'_, AppState>,
     id: String,
 ) -> AppResult<Vec<GitRemote>> {
+    let _work = state.work.enter()?;
     service::remotes(&state, &id).await
 }
 
@@ -100,6 +109,7 @@ pub async fn add_source_remote(
     name: String,
     url: String,
 ) -> AppResult<Vec<GitRemote>> {
+    let _work = state.work.enter()?;
     service::add_remote(&state, &id, &name, &url).await
 }
 
@@ -109,6 +119,7 @@ pub async fn remove_source_remote(
     id: String,
     name: String,
 ) -> AppResult<Vec<GitRemote>> {
+    let _work = state.work.enter()?;
     service::remove_remote(&state, &id, &name).await
 }
 
@@ -117,5 +128,6 @@ pub async fn discover_default_branch(
     state: State<'_, AppState>,
     repository: String,
 ) -> AppResult<Option<String>> {
+    let _work = state.work.enter()?;
     crate::git::discover_default_branch(&state.git(), &repository).await
 }

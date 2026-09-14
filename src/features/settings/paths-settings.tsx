@@ -1,3 +1,4 @@
+import { useUpdateBlocker } from "@/hooks/use-update-blocker";
 import {
   DatabaseIcon,
   FolderOpenIcon,
@@ -26,6 +27,8 @@ export function PathsSettings({ settings }: { settings: Settings }) {
   const updateSettings = useUpdateSettings();
   const pickDirectory = useDirectoryPicker();
   const [draft, setDraft] = useState(settings.workspace);
+
+  useUpdateBlocker(JSON.stringify(draft) !== JSON.stringify(settings.workspace));
 
   const applicationPaths = appInfo.data
     ? ([

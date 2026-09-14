@@ -39,5 +39,16 @@
       "icons/icon.ico"
     ],
     "category": "DeveloperTool"
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": [
+        "https://github.com/empios/LlamaPilot/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

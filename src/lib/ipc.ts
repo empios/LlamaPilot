@@ -1,3 +1,4 @@
+import { updateStatusSchema } from "@/types/updater";
 import { Channel, invoke, isTauri } from "@tauri-apps/api/core";
 import type { z } from "zod";
 
@@ -116,6 +117,11 @@ async function call<Schema extends z.ZodType>(
 const voidSchema = zod.union([zod.null(), zod.undefined()]).transform(() => undefined);
 
 export const ipc = {
+  getAppUpdateStatus: () => call("get_app_update_status", updateStatusSchema),
+  checkAppUpdate: () => call("check_app_update", voidSchema),
+  downloadAppUpdate: () => call("download_app_update", voidSchema),
+  installAppUpdate: (automatic = false) => call("install_app_update", voidSchema, { automatic }),
+  deferAppUpdate: () => call("defer_app_update", voidSchema),
   testAgentConnection: (
     request: AgentConnectionTestRequest,
   ): Promise<AgentConnectionTest> =>

@@ -1,3 +1,4 @@
+import { useUpdateBlocker } from "@/hooks/use-update-blocker";
 import { useState } from "react";
 
 import { WrenchIcon } from "lucide-react";
@@ -18,6 +19,8 @@ export function ToolingSettings({ settings }: { settings: Settings }) {
   const updateSettings = useUpdateSettings();
   const [git, setGit] = useState(settings.git);
   const [build, setBuild] = useState(settings.build);
+
+  useUpdateBlocker(JSON.stringify(git) !== JSON.stringify(settings.git) || JSON.stringify(build) !== JSON.stringify(settings.build));
 
   return (
     <Section

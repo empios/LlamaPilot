@@ -33,20 +33,20 @@ export function Section({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-lg border border-border bg-card",
+        "overflow-hidden rounded-lg border border-border bg-card shadow-[var(--pg-shadow-01)]",
         className,
       )}
       {...props}
     >
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/35 px-[18px] py-3">
         <div className="flex min-w-0 items-center gap-2.5">
           {Icon ? (
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-card text-[var(--pg-orange-60)] shadow-[var(--pg-shadow-01)] dark:text-[var(--pg-orange-30)]">
               <Icon className="size-3.5" />
             </span>
           ) : null}
           <div className="flex min-w-0 flex-col">
-            <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+            <span className="text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
               {label}
             </span>
             {title ? (
@@ -59,7 +59,7 @@ export function Section({
         </div>
         {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
       </header>
-      <div className={cn("p-4", bodyClassName)}>{children}</div>
+      <div className={cn("p-[18px]", bodyClassName)}>{children}</div>
     </section>
   );
 }

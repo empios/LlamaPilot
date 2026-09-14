@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:release": "node --test scripts/prepare-release.test.mjs",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "tauri": "tauri",
@@ -16,7 +17,8 @@
     "site:build": "node scripts/build-site.mjs"
   },
   "dependencies": {
-    "@fontsource-variable/geist": "^5.2.9",
+    "@fontsource-variable/ubuntu-sans": "^5.3.0",
+    "@fontsource-variable/ubuntu-sans-mono": "^5.3.0",
     "@radix-ui/react-alert-dialog": "^1.1.16",
     "@radix-ui/react-collapsible": "^1.1.13",
     "@radix-ui/react-dialog": "^1.1.16",

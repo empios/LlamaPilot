@@ -34,3 +34,6 @@ coverage/
 # Local release deliverables
 /artifacts/
 website-dist/
+
+# Generated public updater configuration; production private keys must stay outside the repository
+/src-tauri/tauri.updater.local.json

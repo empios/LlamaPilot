@@ -103,6 +103,15 @@ src/
 declared once there with its argument and result types, so a Rust signature change surfaces as
 a TypeScript error at a single location.
 
+### Frontend design system
+
+The UI adapts the MIT-licensed [Pangolin Design System](https://github.com/empios/Pangolin) to the
+existing React and Radix component layer. Semantic CSS variables in `src/index.css` expose two
+themes: warm, light **Paper** and aubergine **Terminal**. Shared controls consume those variables,
+so feature pages inherit typography, colour, focus, density, radius, and elevation consistently
+without duplicating theme-specific classes. Ubuntu Sans and Ubuntu Sans Mono are bundled locally
+through Fontsource for an offline-safe desktop package. See `THIRD_PARTY_NOTICES.md` for attribution.
+
 State ownership:
 
 - **TanStack Query** owns anything the Rust side is the source of truth for (settings, sources,
@@ -111,6 +120,28 @@ State ownership:
 - **Zustand** owns client-only state (current page, theme, panel sizes, draft forms).
 - **Zod** validates at the IPC boundary for payloads that come from parsing external output, so
   malformed data fails loudly instead of rendering as `undefined`.
+
+## Application updates
+
+`updater::UpdateService` owns the discovered release and verified download in Rust. Its operation
+mutex prevents overlapping check/download/install calls; status and progress remain observable
+through typed IPC and `app-update-status` events. The frontend polls status and owns one scheduler
+in the app shell. Update preferences deserialize with defaults for older settings files. No
+updater plugin IPC permissions or process execution privileges are granted to the WebView.
+
+Commands that launch work or access persistent files hold a `WorkGate` lease until completion.
+Installation acquires an exclusive lease, rechecks the persisted automatic-install preference
+and supervised server/build/download/sweep state, and retains the lease through restart. New
+commands cannot enter during installation. `UpdateBusy` means defer and retry after a fresh
+countdown; network/signature/installer failures require an explicit retry. New commands that
+start processes or access persistent state must participate in this gate.
+
+Frontend draft leases and open dialogs defer automatic installation. The install action checks
+them synchronously and commits an inert workspace with a restart overlay before invoking Rust.
+The single-instance plugin prevents a second application process from bypassing that gate.
+Only explicitly supported installation types can install updates; others expose manual downloads.
+Downloaded bytes are session-local and never replace installed files until signature verification
+and admission checks succeed. Production signing and recovery are documented in RELEASING.md.
 
 ## Error model
 

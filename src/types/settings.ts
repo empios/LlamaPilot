@@ -4,6 +4,11 @@ export const themePreferenceSchema = z.enum(["system", "light", "dark"]);
 export type ThemePreference = z.infer<typeof themePreferenceSchema>;
 
 export const settingsSchema = z.object({
+  updates: z.object({
+    autoCheck: z.boolean(),
+    autoDownload: z.boolean(),
+    autoInstall: z.boolean(),
+  }).default({ autoCheck: true, autoDownload: false, autoInstall: false }),
   schemaVersion: z.number().int(),
   appearance: z.object({
     theme: themePreferenceSchema,

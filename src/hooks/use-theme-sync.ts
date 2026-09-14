@@ -24,6 +24,8 @@ export function useThemeSync() {
     const apply = () => {
       const resolved = resolveTheme(preference);
       document.documentElement.classList.toggle("dark", resolved === "dark");
+      document.documentElement.dataset.theme =
+        resolved === "dark" ? "terminal" : "paper";
       document.documentElement.style.colorScheme = resolved;
     };
 

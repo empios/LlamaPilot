@@ -8,6 +8,7 @@ pub mod server;
 pub mod settings;
 pub mod sources;
 pub mod system;
+pub mod updater;
 
 /// Every command exposed to the frontend.
 ///
@@ -17,6 +18,11 @@ pub mod system;
 macro_rules! generated_command_handler {
     () => {
         tauri::generate_handler![
+            $crate::commands::updater::get_app_update_status,
+            $crate::commands::updater::check_app_update,
+            $crate::commands::updater::download_app_update,
+            $crate::commands::updater::install_app_update,
+            $crate::commands::updater::defer_app_update,
             $crate::commands::agent::test_agent_connection,
             $crate::commands::settings::get_settings,
             $crate::commands::settings::update_settings,
