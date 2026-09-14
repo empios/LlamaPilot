@@ -25,6 +25,7 @@ pub async fn get_performance_plan(
     state: State<'_, AppState>,
     profile_id: String,
 ) -> AppResult<PerformancePlan> {
+    let _work = state.work.enter()?;
     performance_plan(&state, &profile_id).await
 }
 
@@ -69,6 +70,7 @@ pub async fn run_performance_benchmark(
     state: State<'_, AppState>,
     profile_id: String,
 ) -> AppResult<PerformanceBenchmark> {
+    let _work = state.work.enter()?;
     if state.performance_sweeps.is_running() {
         return Err(performance::sweep_in_progress_error());
     }
@@ -91,6 +93,7 @@ pub async fn run_performance_sweep(
     profile_id: String,
     on_event: Channel<PerformanceSweepEvent>,
 ) -> AppResult<PerformanceSweep> {
+    let _work = state.work.enter()?;
     let permit = state.performance_sweeps.begin()?;
     let result = run_sweep(&state, &profile_id, &on_event, &permit).await;
     if result.is_err() {

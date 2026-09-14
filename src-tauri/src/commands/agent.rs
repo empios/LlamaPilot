@@ -11,6 +11,7 @@ pub async fn test_agent_connection(
     state: State<'_, AppState>,
     request: AgentConnectionTestRequest,
 ) -> AppResult<AgentConnectionTest> {
+    let _work = state.work.enter()?;
     let snapshot = state.server.snapshot().await;
     if snapshot.state != ServerLifecycleState::Ready {
         return Err(AppError::new(

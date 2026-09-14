@@ -6,6 +6,23 @@ development data.
 
 ## Unreleased
 
+### Added
+
+- Pangolin-based Paper and Terminal themes, bundled Ubuntu Sans typography, and
+  refreshed navigation and shared desktop controls.
+- Application updates in Settings: automatic stable-release checks, optional background
+  downloads and opt-in installation when idle, with a visible restart countdown and deferral.
+- Signed Tauri update artifacts and a complete GitHub Releases updater manifest, validated
+  against build provenance and Minisign signatures before publication.
+- A shared installation/work gate, unsaved-editor protection and single-instance startup.
+  NSIS, installed macOS applications and writable AppImages support in-app installation;
+  MSI, DEB and standalone executables retain manual package updates.
+
+### Fixed
+
+- Missing or unavailable update feeds now show a retryable service status instead of
+  a generic application-update failure, without incorrectly reporting the app as up to date.
+
 ## 0.3.0 — 2026-09-10
 
 ### Added
@@ -32,6 +49,12 @@ development data.
 - Agent Connect with supervised-profile launch, effective endpoint and model discovery, an actual
   OpenAI-compatible models/chat test, transient API-key support, and copy-ready JSON, OpenAI
   JavaScript, Aider PowerShell, OpenCode, and Pi configurations.
+
+### Changed
+
+- Redesigned the complete frontend around the MIT-licensed Pangolin Design System, including its
+  Paper and Terminal themes, Ubuntu Sans typography, aubergine application shell, orange focus and
+  action states, warm surfaces, dense controls, status treatments, and data-oriented layout.
 
 ## 0.2.0 — 2026-08-26
 

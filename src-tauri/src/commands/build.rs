@@ -12,6 +12,7 @@ use super::progress::{self, ProgressEvent};
 
 #[tauri::command]
 pub async fn detect_toolchain(state: State<'_, AppState>) -> AppResult<Toolchain> {
+    let _work = state.work.enter()?;
     Ok(detect::detect(&state.settings.get()).await)
 }
 
@@ -21,6 +22,7 @@ pub async fn build_runtime(
     request: BuildRequest,
     on_progress: Channel<ProgressEvent>,
 ) -> AppResult<BuildOutcome> {
+    let _work = state.work.enter()?;
     let sink = progress::forward_to_channel(on_progress.clone(), "Building llama-server");
     let outcome = service::build(&state, request, sink).await;
 
@@ -48,6 +50,7 @@ pub fn get_runtime_capabilities(
     state: State<'_, AppState>,
     id: String,
 ) -> AppResult<RuntimeInspection> {
+    let _work = state.work.enter()?;
     inspection::load(&state, &id)
 }
 
@@ -56,6 +59,7 @@ pub async fn inspect_runtime_capabilities(
     state: State<'_, AppState>,
     id: String,
 ) -> AppResult<RuntimeInspection> {
+    let _work = state.work.enter()?;
     inspection::refresh(&state, &id).await
 }
 
@@ -65,6 +69,7 @@ pub async fn inspect_runtime_capabilities(
 /// removes one.
 #[tauri::command]
 pub async fn delete_runtime(state: State<'_, AppState>, id: String) -> AppResult<()> {
+    let _work = state.work.enter()?;
     let snapshot = state.server.snapshot().await;
     if snapshot.state.is_active() && snapshot.runtime_id.as_deref() == Some(&id) {
         return Err(AppError::new(

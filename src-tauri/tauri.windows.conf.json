@@ -4,6 +4,11 @@
     "targets": [
       "nsis",
       "msi"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "installerHooks": "installer-hooks.nsh"
+      }
+    }
   }
 }

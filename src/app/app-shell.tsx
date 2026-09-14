@@ -1,3 +1,5 @@
+import { UpdateBridge } from "@/features/settings/update-bridge";
+import { useUpdateStore } from "@/stores/update-store";
 import { lazy, Suspense } from "react";
 
 import { AppSidebar } from "@/app/app-sidebar";
@@ -48,6 +50,7 @@ const SettingsPage = lazy(() =>
 );
 
 export function AppShell() {
+  const installing = useUpdateStore((s) => s.installing);
   useThemeSync();
   useServerEventBridge();
   const page = useNavigationStore((state) => state.page);
@@ -55,17 +58,25 @@ export function AppShell() {
   return (
     // Sized from the document rather than the viewport: `100vw`/`100vh` ignore scrollbar
     // gutters, which is how the shell ended up wider than the window it lives in.
-    <div className="flex h-full w-full overflow-hidden bg-background text-foreground">
-      <AppSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AppTopbar />
-        <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1400px] px-8 py-7">
-            <Suspense fallback={<PageLoadingFallback />}>{renderPage(page)}</Suspense>
-          </div>
-        </main>
+    <>
+      {installing && (
+        <div role="alert" className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 text-lg">
+          Installing update. LlamaPilot will restart…
+        </div>
+      )}
+      <div inert={installing} className="flex h-full w-full overflow-hidden bg-background text-foreground">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AppTopbar />
+          <UpdateBridge />
+          <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
+            <div className="mx-auto w-full max-w-[1480px] px-8 py-6">
+              <Suspense fallback={<PageLoadingFallback />}>{renderPage(page)}</Suspense>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

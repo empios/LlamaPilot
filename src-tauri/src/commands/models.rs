@@ -21,6 +21,7 @@ pub struct ModelDownloadOutcome {
 
 #[tauri::command]
 pub async fn scan_models(state: State<'_, AppState>) -> AppResult<ModelCatalog> {
+    let _work = state.work.enter()?;
     let service = state.models.clone();
     let roots = state.settings.get().workspace.model_directories;
     tauri::async_runtime::spawn_blocking(move || service.scan(&roots))
@@ -40,6 +41,7 @@ pub async fn set_model_projector(
     model_id: String,
     selection: ProjectorSelection,
 ) -> AppResult<()> {
+    let _work = state.work.enter()?;
     let service = state.models.clone();
     tauri::async_runtime::spawn_blocking(move || service.set_projector(model_id, selection))
         .await
@@ -65,6 +67,7 @@ pub async fn download_hugging_face_model(
     request: ModelDownloadRequest,
     on_event: Channel<ModelDownloadEvent>,
 ) -> AppResult<ModelDownloadOutcome> {
+    let _work = state.work.enter()?;
     let permit = state.model_downloads.begin()?;
     let roots = state.settings.get().workspace.model_directories;
     let requested_destination = request.destination_directory.clone();

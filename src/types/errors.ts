@@ -50,6 +50,7 @@ export const errorCodeSchema = z.enum([
   "benchmarkInProgress",
   "benchmarkCancelled",
   "unsupported",
+  "updateBusy",
   "internal",
 ]);
 

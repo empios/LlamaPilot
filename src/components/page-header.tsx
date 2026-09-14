@@ -10,12 +10,12 @@ interface PageHeaderProps {
 
 export function PageHeader({ eyebrow, title, description, actions }: PageHeaderProps) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4">
+    <header className="flex flex-wrap items-end justify-between gap-5">
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+        <span className="text-xs font-medium text-[var(--pg-orange-60)] dark:text-[var(--pg-orange-30)]">
           {eyebrow}
         </span>
-        <h1 className="text-2xl leading-tight font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-[2rem] leading-tight font-light tracking-[-0.02em]">{title}</h1>
         {description ? (
           <p className="max-w-2xl text-sm text-muted-foreground">{description}</p>
         ) : null}

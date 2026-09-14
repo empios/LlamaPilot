@@ -1,11 +1,13 @@
 import { CheckIcon, MonitorIcon, MoonIcon, SunIcon, TriangleAlertIcon } from "lucide-react";
 
+import { findNavigationItem } from "@/app/navigation";
 import { StatusChip } from "@/components/status-chip";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useGitVersion, useHardwareSnapshot } from "@/hooks/use-app-info";
 import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
 import { useThemeStore } from "@/stores/theme-store";
+import { useNavigationStore } from "@/stores/navigation-store";
 import { themePreferenceSchema, type ThemePreference } from "@/types/settings";
 
 const themeOptions = [
@@ -21,18 +23,33 @@ const themeOptions = [
  * header owns the heading, so duplicating it here just wasted a row.
  */
 export function AppTopbar() {
+  const page = useNavigationStore((state) => state.page);
+  const currentPage = findNavigationItem(page);
+
   return (
-    <header className="flex h-14 shrink-0 items-center justify-end gap-5 border-b border-border px-6">
-      <div className="flex items-center gap-2">
-        <GitStatus />
-        <GpuStatus />
+    <header className="flex h-12 shrink-0 items-center justify-between gap-5 border-b border-border bg-card px-6 shadow-[var(--pg-shadow-01)]">
+      <div className="flex min-w-0 items-center gap-2 text-xs">
+        <span className="font-medium text-[var(--pg-orange-60)] dark:text-[var(--pg-orange-30)]">
+          LlamaPilot
+        </span>
+        <span className="text-muted-foreground">/</span>
+        <span className="truncate text-muted-foreground">
+          {currentPage?.label ?? "Workspace"}
+        </span>
       </div>
 
-      <div className="flex items-center gap-2 border-l border-border pl-5">
-        <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-          Theme
-        </span>
-        <ThemeToggle />
+      <div className="flex items-center gap-5">
+        <div className="flex items-center gap-2">
+          <GitStatus />
+          <GpuStatus />
+        </div>
+
+        <div className="flex items-center gap-2 border-l border-border pl-5">
+          <span className="text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+            Theme
+          </span>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

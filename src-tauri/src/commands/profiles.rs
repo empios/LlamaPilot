@@ -13,6 +13,7 @@ use crate::state::AppState;
 
 #[tauri::command]
 pub async fn list_profiles(state: State<'_, AppState>) -> AppResult<Vec<LaunchProfile>> {
+    let _work = state.work.enter()?;
     let profiles = state.profiles.clone();
     run_blocking(move || profiles.list()).await
 }
@@ -22,6 +23,7 @@ pub async fn create_profile(
     state: State<'_, AppState>,
     input: ProfileInput,
 ) -> AppResult<LaunchProfile> {
+    let _work = state.work.enter()?;
     let profiles = state.profiles.clone();
     let models = state.models.clone();
     let roots = state.settings.get().workspace.model_directories;
@@ -45,6 +47,7 @@ pub async fn update_profile(
     id: String,
     input: ProfileInput,
 ) -> AppResult<LaunchProfile> {
+    let _work = state.work.enter()?;
     if state.performance_sweeps.is_running() {
         return Err(crate::performance::sweep_in_progress_error());
     }
@@ -76,6 +79,7 @@ pub(crate) async fn update_profile_record(
 
 #[tauri::command]
 pub async fn delete_profile(state: State<'_, AppState>, id: String) -> AppResult<()> {
+    let _work = state.work.enter()?;
     if state.performance_sweeps.is_running() {
         return Err(crate::performance::sweep_in_progress_error());
     }
@@ -97,6 +101,7 @@ pub async fn preview_profile_command(
     profile_id: Option<String>,
     input: ProfileInput,
 ) -> AppResult<CommandPreview> {
+    let _work = state.work.enter()?;
     let profiles = state.profiles.clone();
     let models = state.models.clone();
     let roots = state.settings.get().workspace.model_directories;

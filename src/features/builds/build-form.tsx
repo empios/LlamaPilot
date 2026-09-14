@@ -1,3 +1,4 @@
+import { useUpdateBlocker } from "@/hooks/use-update-blocker";
 import { CpuIcon, HammerIcon, MicrochipIcon, SquareIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -63,6 +64,8 @@ export function BuildForm() {
     backend: toolchain.data?.defaultBackend ?? "cpu",
   };
   const [clean, setClean] = useState(false);
+
+  useUpdateBlocker(selectedProfile !== null || sourceId !== null || clean);
 
   const availableSources = sources.data ?? [];
   const selectedSourceId =

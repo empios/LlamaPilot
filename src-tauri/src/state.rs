@@ -17,6 +17,8 @@ use crate::sources::SourceRegistry;
 
 /// Everything the command layer needs, resolved once at startup.
 pub struct AppState {
+    pub work: crate::updater::gate::WorkGate,
+    pub updates: crate::updater::UpdateService,
     pub paths: AppPaths,
     pub settings: JsonStore<Settings>,
     pub sources: JsonStore<SourceRegistry>,
@@ -110,6 +112,8 @@ impl AppState {
         tracing::info!(data_dir = %paths.data_dir.display(), "application state ready");
 
         Ok(Self {
+            work: Default::default(),
+            updates: Default::default(),
             paths,
             settings,
             sources,

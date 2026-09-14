@@ -4,6 +4,23 @@ use serde::{Deserialize, Serialize};
 
 use super::paths::AppPaths;
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct UpdateSettings {
+    pub auto_check: bool,
+    pub auto_download: bool,
+    pub auto_install: bool,
+}
+impl Default for UpdateSettings {
+    fn default() -> Self {
+        Self {
+            auto_check: true,
+            auto_download: false,
+            auto_install: false,
+        }
+    }
+}
+
 pub const SETTINGS_SCHEMA_VERSION: u32 = 1;
 
 pub const DEFAULT_LLAMA_REPOSITORY: &str = "https://github.com/ggml-org/llama.cpp";
@@ -90,6 +107,7 @@ impl Default for ServerSettings {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
+    pub updates: UpdateSettings,
     pub schema_version: u32,
     pub appearance: AppearanceSettings,
     pub workspace: WorkspaceSettings,
@@ -102,6 +120,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             schema_version: SETTINGS_SCHEMA_VERSION,
+            updates: UpdateSettings::default(),
             appearance: AppearanceSettings::default(),
             workspace: WorkspaceSettings::default(),
             git: GitSettings::default(),

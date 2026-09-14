@@ -1,3 +1,4 @@
+import { useUpdateBlocker } from "@/hooks/use-update-blocker";
 import { useState } from "react";
 
 import { ServerIcon } from "lucide-react";
@@ -19,6 +20,8 @@ export function GeneralSettings({ settings }: { settings: Settings }) {
   const updateSettings = useUpdateSettings();
   const [draft, setDraft] = useState(settings.server);
   const [compact, setCompact] = useState(settings.appearance.compactDensity);
+
+  useUpdateBlocker(JSON.stringify(draft) !== JSON.stringify(settings.server) || compact !== settings.appearance.compactDensity);
 
   const portIsValid = draft.defaultPort >= 1 && draft.defaultPort <= 65535;
 

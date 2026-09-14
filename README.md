@@ -84,6 +84,9 @@ CUDA on Windows and Linux.
   comes from `/health`, while `/props`, `/slots`, and `/metrics` enrich optional telemetry.
 - **Keep the raw truth** — stdout and stderr are drained concurrently into a bounded live view and
   a per-run raw transcript. Parsed levels and startup facts never rewrite the original line.
+- **Use a coherent desktop design language** — the frontend adapts the MIT-licensed
+  [Pangolin Design System](https://github.com/empios/Pangolin), with warm Paper and aubergine
+  Terminal themes, compact operational controls, and locally bundled Ubuntu Sans typography.
 
 ## Quick start
 
@@ -112,6 +115,18 @@ The installer contains the LlamaPilot app. To build and serve your first runtime
 CMake, and a native C++ compiler**, and choose a GGUF model. See the
 [platform setup instructions](CONTRIBUTING.md) for the required tools; CUDA additionally needs
 the NVIDIA toolkit and driver.
+
+### Application updates (next release)
+
+The next release adds **Settings → Updates**. Checks run at startup and every 24 hours while
+the app is open. Background downloads and installation when idle are optional. Automatic
+installation shows a 30-second restart countdown and waits for servers, builds, downloads,
+benchmarks and open editors to finish. Choose **Later** to defer that version for the session.
+
+In-app installation supports NSIS on Windows, installed macOS apps and writable Linux
+AppImages. MSI, DEB and standalone executables use manual package updates. Existing v0.3.0
+users must install the first updater-enabled release manually. See
+[updater release setup](docs/RELEASING.md#updater-signing-and-first-release) for signing and qualification.
 
 ### First server
 
@@ -146,7 +161,7 @@ the NVIDIA toolkit and driver.
 ## Technology
 
 - **Desktop:** Tauri 2 and Rust on Tokio
-- **UI:** React 19, TypeScript, Vite, Tailwind CSS, and Radix UI
+- **UI:** React 19, TypeScript, Vite, Tailwind CSS, Radix UI, and Pangolin design tokens
 - **State:** TanStack Query for backend state and Zustand for local UI state
 - **Boundaries:** Serde on Rust and Zod validation in TypeScript
 - **Integration:** Git, CMake, upstream llama.cpp CLI discovery, GGUF v2/v3 metadata, and the
@@ -154,6 +169,9 @@ the NVIDIA toolkit and driver.
 
 The architecture keeps process execution and filesystem access in Rust. The frontend is a typed,
 reactive control surface rather than a privileged shell.
+
+Third-party design and font attributions are listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Build from source
 

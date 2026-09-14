@@ -1,3 +1,4 @@
+import { useUpdateBlocker } from "@/hooks/use-update-blocker";
 import { CpuIcon, RefreshCwIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -114,6 +115,8 @@ export function ProfileEditor({
           modelId: usableModel?.id,
         }),
   );
+  useUpdateBlocker(true);
+
   const [advancedSearch, setAdvancedSearch] = useState("");
   const selectedRuntime = runtimes.find((runtime) => runtime.id === draft.runtimeId) ?? null;
   const capabilities = useRuntimeCapabilities(

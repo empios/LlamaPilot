@@ -25,6 +25,7 @@ pub async fn subscribe_server_events(
     state: State<'_, AppState>,
     on_event: Channel<ServerEvent>,
 ) -> AppResult<String> {
+    let _work = state.work.enter()?;
     Ok(state.server.subscribe(on_event).await)
 }
 
@@ -43,6 +44,7 @@ pub async fn start_server(
     state: State<'_, AppState>,
     profile_id: String,
 ) -> AppResult<ServerSnapshot> {
+    let _work = state.work.enter()?;
     if state.performance_sweeps.is_running() {
         return Err(crate::performance::sweep_in_progress_error());
     }
@@ -51,11 +53,13 @@ pub async fn start_server(
 
 #[tauri::command]
 pub async fn stop_server(state: State<'_, AppState>) -> AppResult<ServerSnapshot> {
+    let _work = state.work.enter()?;
     state.server.stop().await
 }
 
 #[tauri::command]
 pub async fn restart_server(state: State<'_, AppState>) -> AppResult<ServerSnapshot> {
+    let _work = state.work.enter()?;
     if state.performance_sweeps.is_running() {
         return Err(crate::performance::sweep_in_progress_error());
     }
