@@ -299,6 +299,8 @@ fn installation_support(_app: &AppHandle) -> Result<(), String> {
     }
     #[cfg(target_os = "linux")]
     {
+        use tauri::Manager;
+
         let path = _app
             .env()
             .appimage
