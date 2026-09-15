@@ -92,25 +92,25 @@ CUDA on Windows and Linux.
 
 ### Install
 
-Native installers are available in [LlamaPilot v0.4.1](https://github.com/empios/LlamaPilot/releases/tag/v0.4.1).
+Native installers are available in [LlamaPilot v0.4.2](https://github.com/empios/LlamaPilot/releases/tag/v0.4.2).
 Check [the latest release](https://github.com/empios/LlamaPilot/releases/latest) for newer versions.
 Choose the package matching your operating system and processor:
 
 | Platform | Download | Backend support |
 | --- | --- | --- |
-| Windows 10/11 x64 | [Setup EXE](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_x64-setup.exe) · [MSI](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_x64_en-US.msi) | CPU, NVIDIA CUDA |
-| macOS 13+ Apple Silicon | [DMG for Apple Silicon](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_aarch64.dmg) | CPU, Metal |
-| macOS 13+ Intel | [DMG for Intel](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_x64.dmg) | CPU |
-| Ubuntu 22.04/24.04 x64 | [AppImage](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_amd64.AppImage) · [Debian package](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_amd64.deb) | CPU, NVIDIA CUDA |
+| Windows 10/11 x64 | [Setup EXE](https://github.com/empios/LlamaPilot/releases/download/v0.4.2/LlamaPilot_0.4.2_x64-setup.exe) · [MSI](https://github.com/empios/LlamaPilot/releases/download/v0.4.2/LlamaPilot_0.4.2_x64_en-US.msi) | CPU, NVIDIA CUDA |
+| macOS 13+ Apple Silicon | [DMG for Apple Silicon](https://github.com/empios/LlamaPilot/releases/download/v0.4.2/LlamaPilot_0.4.2_aarch64.dmg) | CPU, Metal |
+| macOS 13+ Intel | [DMG for Intel](https://github.com/empios/LlamaPilot/releases/download/v0.4.2/LlamaPilot_0.4.2_x64.dmg) | CPU |
+| Ubuntu 22.04/24.04 x64 | [AppImage](https://github.com/empios/LlamaPilot/releases/download/v0.4.2/LlamaPilot_0.4.2_amd64.AppImage) · [Debian package](https://github.com/empios/LlamaPilot/releases/download/v0.4.2/LlamaPilot_0.4.2_amd64.deb) | CPU, NVIDIA CUDA |
 
 On macOS, open the DMG and drag LlamaPilot to Applications. On Linux, make the AppImage
 executable before launching it, or install the Debian package with `sudo apt install ./<file>.deb`.
 See [platform support](docs/PLATFORM_SUPPORT.md) for prerequisites, signing status, and limitations.
 
-The v0.4.1 macOS apps are **ad-hoc signed, without Apple notarization**. Windows installers are
+The v0.4.2 macOS apps are **ad-hoc signed, without Apple notarization**. Windows installers are
 unsigned and may trigger Microsoft Defender SmartScreen. Download from this repository's releases
 and compare the file's SHA-256 digest with
-[SHA256SUMS.txt](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/SHA256SUMS.txt).
+[SHA256SUMS.txt](https://github.com/empios/LlamaPilot/releases/download/v0.4.2/SHA256SUMS.txt).
 
 The installer contains the LlamaPilot app. To build and serve your first runtime, install **Git,
 CMake, and a native C++ compiler**, and choose a GGUF model. See the
@@ -211,18 +211,17 @@ complete GitHub Release is published. See [the release process](docs/RELEASING.m
 
 ## Project status
 
-**v0.4.1 is released for Windows, macOS, and Linux**, with signed application-update packages
+**v0.4.2 is released for Windows, macOS, and Linux**, with signed application-update packages
 and refreshed Paper/Terminal themes. CI tests and packages Windows x64,
 macOS Apple Silicon, macOS Intel, and Linux x64. CPU and Metal serving were also exercised on
 an Apple M4 Max. See [platform support](docs/PLATFORM_SUPPORT.md) and the
-[release validation notes](https://github.com/empios/LlamaPilot/releases/tag/v0.4.1) for the
+[release validation notes](https://github.com/empios/LlamaPilot/releases/tag/v0.4.2) for the
 supported targets and remaining hardware and desktop qualification.
 
-The next release fixes model downloads appearing stuck at 0% and allows profiles to use MTP
+Version 0.4.2 fixes model downloads appearing stuck at 0% and allows profiles to use MTP
 heads embedded in the main GGUF without a separate draft file. With a runtime that advertises
 `draft-mtp`, choose **Profiles → Speculative → Use MTP from main GGUF** when your model includes
-those heads. Separate draft files remain supported. These fixes are available when building this
-branch from source; they are not included in the v0.4.1 installers. See [the changelog](CHANGELOG.md).
+those heads. Separate draft files remain supported. See [the changelog](CHANGELOG.md).
 
 The initial eight-phase implementation roadmap is complete:
 
