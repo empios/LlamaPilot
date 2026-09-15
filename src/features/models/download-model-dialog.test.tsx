@@ -1,5 +1,6 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import downloadEvents from "../../../src-tauri/tests/fixtures/model-download-events.json";
 
 const mocks = vi.hoisted(() => ({
   inspectMutate: vi.fn(),
@@ -20,8 +21,16 @@ vi.mock("@/hooks/use-models", () => ({
   }),
 }));
 
-vi.mock("@/lib/ipc", () => ({
-  createModelDownloadChannel: vi.fn(() => ({ onmessage: null })),
+vi.mock("@tauri-apps/api/core", () => ({
+  Channel: class {
+    onmessage?: (message: unknown) => void;
+  },
+  invoke: vi.fn(),
+  isTauri: () => false,
+}));
+
+vi.mock("@/lib/ipc", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/ipc")>()),
   ipc: { cancelModelDownload: mocks.cancel },
 }));
 
@@ -107,5 +116,48 @@ describe("Hugging Face model download dialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel download" }));
     expect(mocks.cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("advances the bar and byte count from backend events through the IPC parser", () => {
+    mocks.inspectMutate.mockImplementation(
+      (_input: string, options: { onSuccess: (value: typeof repository) => void }) => {
+        options.onSuccess(repository);
+      },
+    );
+    const props = {
+      open: true,
+      directories: ["E:\\models"],
+      onOpenChange: vi.fn(),
+    };
+    const { rerender } = render(<DownloadModelDialog {...props} />);
+    fireEvent.change(screen.getByLabelText("Repository"), {
+      target: { value: repository.repositoryId },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load files" }));
+    fireEvent.click(screen.getByRole("button", { name: "Download to model folder" }));
+    const { channel } = mocks.downloadMutate.mock.calls[0]![0] as {
+      channel: { onmessage: (message: unknown) => void };
+    };
+    mocks.downloadPending = true;
+    rerender(<DownloadModelDialog {...props} />);
+
+    act(() => {
+      channel.onmessage(downloadEvents[0]);
+      channel.onmessage(downloadEvents[1]);
+    });
+    const bar = screen.getByRole("progressbar", { name: "Model download progress" });
+    expect(bar.parentElement?.textContent).toContain("coder-q4.gguf");
+    for (const [index, percent, bytes] of [
+      [2, 25, "244.1 KB / 976.6 KB"],
+      [3, 75, "732.4 KB / 976.6 KB"],
+      [4, 100, "976.6 KB / 976.6 KB"],
+    ] as const) {
+      act(() => channel.onmessage(downloadEvents[index]));
+      expect(screen.getByText(`${percent}%`)).toBeTruthy();
+      expect(screen.getByText(bytes)).toBeTruthy();
+      expect(bar.getAttribute("aria-valuenow")).toBe(String(percent));
+      expect(bar.querySelector<HTMLElement>("[data-slot='progress-indicator']")?.style.transform)
+        .toBe(`translateX(-${100 - percent}%)`);
+    }
   });
 });

@@ -7,10 +7,9 @@ use crate::llama::capabilities::{LlamaCapabilities, LlamaOption};
 use super::record::{ProfileInput, ProfileOptionSetting};
 
 const NON_QUANTIZED_CACHE_TYPES: &[&str] = &["f32", "f16", "bf16"];
-const EXTERNAL_DRAFT_TYPES: &[&str] = &[
+const REQUIRED_DRAFT_MODEL_TYPES: &[&str] = &[
     "draft-simple",
     "draft-eagle3",
-    "draft-mtp",
     "draft-dflash",
     "draft-dspark",
 ];
@@ -272,7 +271,7 @@ fn validate_speculative(
         .with_hint("Choose a strategy or return its tuning fields to Default."));
     }
 
-    let uses_external_draft = EXTERNAL_DRAFT_TYPES
+    let requires_draft_model = REQUIRED_DRAFT_MODEL_TYPES
         .iter()
         .any(|strategy| active.contains(strategy));
     let external_keys = [
@@ -282,16 +281,21 @@ fn validate_speculative(
         "draftKvCacheTypeK",
         "draftKvCacheTypeV",
     ];
-    if uses_external_draft {
+    if requires_draft_model || active.contains("draft-mtp") {
+        // MTP can create its draft context from the main GGUF's embedded heads.
         let draft_model = custom_setting(input, capabilities, "draftModel")
-            .filter(|value| !value.trim().is_empty())
-            .ok_or_else(|| {
+            .filter(|value| !value.trim().is_empty());
+        if requires_draft_model && draft_model.is_none() {
+            return Err(
                 invalid_profile("The selected draft strategy requires a draft model.")
-                    .with_hint("Choose a complete local draft GGUF model.")
-            })?;
-        if !Path::new(draft_model).is_file() {
-            return Err(invalid_profile("The selected draft model file is missing.")
-                .with_details(draft_model.to_string()));
+                    .with_hint("Choose a complete local draft GGUF model."),
+            );
+        }
+        if let Some(draft_model) = draft_model {
+            if !Path::new(draft_model).is_file() {
+                return Err(invalid_profile("The selected draft model file is missing.")
+                    .with_details(draft_model.to_string()));
+            }
         }
     } else {
         reject_configured_keys(
@@ -879,19 +883,40 @@ mod tests {
     }
 
     #[test]
-    fn mtp_requires_and_accepts_an_external_draft_model() {
+    fn mtp_accepts_embedded_heads_or_an_existing_external_draft_model() {
         let draft = tempfile::NamedTempFile::new().expect("draft fixture");
         let draft_path = draft.path().to_string_lossy().into_owned();
         let mut input = input();
         input
             .options
             .insert("speculativeType".into(), custom("draft-mtp"));
+        validate_advanced_options(&input, &capabilities()).expect("embedded MTP");
+
+        input
+            .options
+            .insert("draftModel".into(), custom("missing.gguf"));
         assert!(validate_advanced_options(&input, &capabilities()).is_err());
 
         input
             .options
             .insert("draftModel".into(), custom(&draft_path));
         validate_advanced_options(&input, &capabilities()).expect("valid MTP drafter");
+    }
+
+    #[test]
+    fn external_strategies_still_require_a_file_even_when_combined_with_mtp() {
+        for strategy in REQUIRED_DRAFT_MODEL_TYPES {
+            let mut capabilities = capabilities();
+            capabilities.speculative_types.push((*strategy).into());
+            for selected in [strategy.to_string(), format!("draft-mtp,{strategy}")] {
+                let mut input = input();
+                input
+                    .options
+                    .insert("speculativeType".into(), custom(&selected));
+                let error = validate_advanced_options(&input, &capabilities).unwrap_err();
+                assert!(error.message.contains("requires a draft model"));
+            }
+        }
     }
 
     #[test]

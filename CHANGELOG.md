@@ -4,6 +4,17 @@ Notable changes to LlamaPilot are documented here. The project follows semantic 
 it is practical; before 1.0, minor releases may contain intentional breaking changes to persisted
 development data.
 
+## Unreleased
+
+### Fixed
+
+- Deliver model download progress in the field format expected by the frontend, so the
+  progress bar and byte counter update during transfers.
+- Allow `draft-mtp` profiles to save without a separate draft file for models with embedded
+  MTP heads. Add a **Use MTP from main GGUF** action that clears a saved draft-file selection;
+  strategies requiring external draft models still validate the file.
+- Update README installer links and release information to the published v0.4.1.
+
 ## 0.4.1 — 2026-09-14
 
 ### Fixed
