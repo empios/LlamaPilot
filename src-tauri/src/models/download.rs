@@ -50,7 +50,11 @@ pub struct ModelDownloadRequest {
 }
 
 #[derive(Debug, Clone, Serialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
 pub enum ModelDownloadEvent {
     Started {
         total_files: usize,
@@ -705,6 +709,43 @@ fn hub_request_error(error: reqwest::Error) -> AppError {
 mod tests {
     use super::*;
     use tempfile::TempDir;
+
+    #[test]
+    fn download_events_match_the_frontend_wire_contract() {
+        // The dialog test consumes this same fixture through the real IPC parser.
+        let expected: serde_json::Value = serde_json::from_str(include_str!(
+            "../../tests/fixtures/model-download-events.json"
+        ))
+        .unwrap();
+        let events = vec![
+            ModelDownloadEvent::Started {
+                total_files: 1,
+                total_bytes: 1_000_000,
+            },
+            ModelDownloadEvent::FileStarted {
+                path: "coder-q4.gguf".into(),
+                index: 1,
+                total_files: 1,
+            },
+            ModelDownloadEvent::Progress {
+                downloaded_bytes: 250_000,
+                total_bytes: 1_000_000,
+                file_downloaded_bytes: 250_000,
+                file_size_bytes: 1_000_000,
+            },
+            ModelDownloadEvent::Progress {
+                downloaded_bytes: 750_000,
+                total_bytes: 1_000_000,
+                file_downloaded_bytes: 750_000,
+                file_size_bytes: 1_000_000,
+            },
+            ModelDownloadEvent::Finished {
+                total_files: 1,
+                total_bytes: 1_000_000,
+            },
+        ];
+        assert_eq!(serde_json::to_value(events).unwrap(), expected);
+    }
 
     fn sibling(path: &str, size: u64) -> HubSibling {
         HubSibling {

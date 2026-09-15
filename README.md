@@ -92,24 +92,25 @@ CUDA on Windows and Linux.
 
 ### Install
 
-Native installers are available in [LlamaPilot v0.3.0](https://github.com/empios/LlamaPilot/releases/tag/v0.3.0).
+Native installers are available in [LlamaPilot v0.4.1](https://github.com/empios/LlamaPilot/releases/tag/v0.4.1).
+Check [the latest release](https://github.com/empios/LlamaPilot/releases/latest) for newer versions.
 Choose the package matching your operating system and processor:
 
 | Platform | Download | Backend support |
 | --- | --- | --- |
-| Windows 10/11 x64 | [Setup EXE](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_x64-setup.exe) · [MSI](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_x64_en-US.msi) | CPU, NVIDIA CUDA |
-| macOS 13+ Apple Silicon | [DMG for Apple Silicon](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_aarch64.dmg) | CPU, Metal |
-| macOS 13+ Intel | [DMG for Intel](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_x64.dmg) | CPU |
-| Ubuntu 22.04/24.04 x64 | [AppImage](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_amd64.AppImage) · [Debian package](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/LlamaPilot_0.3.0_amd64.deb) | CPU, NVIDIA CUDA |
+| Windows 10/11 x64 | [Setup EXE](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_x64-setup.exe) · [MSI](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_x64_en-US.msi) | CPU, NVIDIA CUDA |
+| macOS 13+ Apple Silicon | [DMG for Apple Silicon](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_aarch64.dmg) | CPU, Metal |
+| macOS 13+ Intel | [DMG for Intel](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_x64.dmg) | CPU |
+| Ubuntu 22.04/24.04 x64 | [AppImage](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_amd64.AppImage) · [Debian package](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/LlamaPilot_0.4.1_amd64.deb) | CPU, NVIDIA CUDA |
 
 On macOS, open the DMG and drag LlamaPilot to Applications. On Linux, make the AppImage
 executable before launching it, or install the Debian package with `sudo apt install ./<file>.deb`.
 See [platform support](docs/PLATFORM_SUPPORT.md) for prerequisites, signing status, and limitations.
 
-The v0.3.0 macOS apps are **ad-hoc signed, without Apple notarization**. Windows installers are
+The v0.4.1 macOS apps are **ad-hoc signed, without Apple notarization**. Windows installers are
 unsigned and may trigger Microsoft Defender SmartScreen. Download from this repository's releases
 and compare the file's SHA-256 digest with
-[SHA256SUMS.txt](https://github.com/empios/LlamaPilot/releases/download/v0.3.0/SHA256SUMS.txt).
+[SHA256SUMS.txt](https://github.com/empios/LlamaPilot/releases/download/v0.4.1/SHA256SUMS.txt).
 
 The installer contains the LlamaPilot app. To build and serve your first runtime, install **Git,
 CMake, and a native C++ compiler**, and choose a GGUF model. See the
@@ -118,14 +119,14 @@ the NVIDIA toolkit and driver.
 
 ### Application updates
 
-Version 0.4.0 adds **Settings → Updates**. Checks run at startup and every 24 hours while
+Version 0.4.1 includes **Settings → Updates**. Checks run at startup and every 24 hours while
 the app is open. Background downloads and installation when idle are optional. Automatic
 installation shows a 30-second restart countdown and waits for servers, builds, downloads,
 benchmarks and open editors to finish. Choose **Later** to defer that version for the session.
 
 In-app installation supports NSIS on Windows, installed macOS apps and writable Linux
 AppImages. MSI, DEB and standalone executables use manual package updates. Existing v0.3.0
-users must install the first updater-enabled release manually. See
+users must install v0.4.1 or a newer release manually to enable future in-app updates. See
 [updater release setup](docs/RELEASING.md#updater-signing-and-first-release) for signing and qualification.
 
 ### First server
@@ -210,11 +211,18 @@ complete GitHub Release is published. See [the release process](docs/RELEASING.m
 
 ## Project status
 
-**v0.3.0 is released for Windows, macOS, and Linux.** CI tests and packages Windows x64,
+**v0.4.1 is released for Windows, macOS, and Linux**, with signed application-update packages
+and refreshed Paper/Terminal themes. CI tests and packages Windows x64,
 macOS Apple Silicon, macOS Intel, and Linux x64. CPU and Metal serving were also exercised on
 an Apple M4 Max. See [platform support](docs/PLATFORM_SUPPORT.md) and the
-[release validation notes](https://github.com/empios/LlamaPilot/releases/tag/v0.3.0) for the
+[release validation notes](https://github.com/empios/LlamaPilot/releases/tag/v0.4.1) for the
 supported targets and remaining hardware and desktop qualification.
+
+The next release fixes model downloads appearing stuck at 0% and allows profiles to use MTP
+heads embedded in the main GGUF without a separate draft file. With a runtime that advertises
+`draft-mtp`, choose **Profiles → Speculative → Use MTP from main GGUF** when your model includes
+those heads. Separate draft files remain supported. These fixes are available when building this
+branch from source; they are not included in the v0.4.1 installers. See [the changelog](CHANGELOG.md).
 
 The initial eight-phase implementation roadmap is complete:
 

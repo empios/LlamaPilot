@@ -543,6 +543,27 @@ mod tests {
     }
 
     #[test]
+    fn embedded_mtp_uses_the_main_model_without_a_draft_file_argument() {
+        let mut input = input();
+        input.options.insert(
+            "speculativeType".into(),
+            ProfileOptionSetting::Custom {
+                value: "draft-mtp".into(),
+            },
+        );
+        let preview =
+            build_command_preview(input, &runtime(), &capabilities(), &target()).expect("preview");
+        assert!(preview
+            .arguments
+            .windows(2)
+            .any(|pair| pair == ["--spec-type", "draft-mtp"]));
+        assert!(!preview
+            .arguments
+            .iter()
+            .any(|arg| arg == "--spec-draft-model" || arg == "--model-draft" || arg == "-md"));
+    }
+
+    #[test]
     fn emits_an_mtp_drafter_as_a_separate_model_argument() {
         let draft = tempfile::NamedTempFile::new().expect("draft fixture");
         let draft_path = draft.path().to_string_lossy().into_owned();

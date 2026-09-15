@@ -1,8 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { createElement } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { LlamaCapabilities, LlamaOption } from "@/types/capabilities";
+import { createProfileInput } from "@/types/profiles";
 
-import { pruneInactiveSpeculativeOptions } from "./profile-specialized-controls";
+import { pruneInactiveSpeculativeOptions, SpeculativeControls } from "./profile-specialized-controls";
 
 function option(flag: string, knownKey: string): LlamaOption {
   return {
@@ -33,6 +36,54 @@ const capabilities: LlamaCapabilities = {
 };
 
 describe("specialized profile controls", () => {
+  afterEach(cleanup);
+
+  it("selects embedded MTP with no catalog drafter and clears a saved draft path", () => {
+    const mtpCapabilities = {
+      ...capabilities,
+      speculativeTypes: [...capabilities.speculativeTypes, "draft-mtp"],
+    };
+    const draft = createProfileInput({ host: "127.0.0.1", port: 8080, autoSelectPort: false });
+    draft.options = {
+      speculativeType: { mode: "custom", value: "draft-simple" },
+      "--model-draft": { mode: "custom", value: "old-draft.gguf" },
+      contextSize: { mode: "custom", value: "8192" },
+    };
+    const onChange = vi.fn();
+    const props = {
+      options: Object.values(mtpCapabilities.options),
+      keyCounts: new Map(Object.values(mtpCapabilities.options).map((option) => [option.knownKey!, 1])),
+      draft,
+      capabilities: mtpCapabilities,
+      models: [],
+      onChange,
+    };
+    const { rerender } = render(createElement(SpeculativeControls, props));
+    fireEvent.click(screen.getByRole("button", { name: "Use MTP from main GGUF" }));
+    expect(onChange).toHaveBeenCalledWith({
+      speculativeType: { mode: "custom", value: "draft-mtp" },
+      contextSize: { mode: "custom", value: "8192" },
+    });
+    rerender(createElement(SpeculativeControls, {
+      ...props,
+      draft: { ...draft, options: onChange.mock.calls[0]![0] },
+    }));
+    expect(screen.getByText(/You can save without a separate draft file/)).toBeTruthy();
+    expect(screen.queryByText(/No compatible drafter was detected/)).toBeNull();
+  });
+
+  it("does not offer embedded MTP when the runtime does not advertise it", () => {
+    render(createElement(SpeculativeControls, {
+      options: Object.values(capabilities.options),
+      keyCounts: new Map(),
+      draft: createProfileInput({ host: "127.0.0.1", port: 8080, autoSelectPort: false }),
+      capabilities,
+      models: [],
+      onChange: vi.fn(),
+    }));
+    expect(screen.queryByRole("button", { name: "Use MTP from main GGUF" })).toBeNull();
+  });
+
   it("removes settings from inactive speculative strategies", () => {
     const input = {
       speculativeType: { mode: "custom", value: "ngram-simple" } as const,

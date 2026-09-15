@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { LlamaCapabilities, LlamaOption } from "@/types/capabilities";
 import {
   drafterModelsFor,
@@ -151,6 +152,28 @@ export function SpeculativeControls({
   const changeSpeculativeOptions = (
     nextOptions: Record<string, ProfileOptionSetting>,
   ) => onChange(pruneInactiveSpeculativeOptions(nextOptions, capabilities));
+  const embeddedMtp = selectedTypes.includes("draft-mtp") &&
+    !selectedTypes.some((type) => type !== "draft-mtp" && isExternalDraftStrategy(type)) &&
+    draftModelSetting.mode !== "custom";
+  const configureEmbeddedMtp = () => {
+    const strategyOption = typeOptions[0];
+    if (!strategyOption) return;
+    let nextOptions = updateProfileOption(
+      draft.options,
+      strategyOption,
+      profileOptionKey(strategyOption, keyCounts),
+      { mode: "custom", value: "draft-mtp" },
+    );
+    if (draftModelOption) {
+      nextOptions = updateProfileOption(
+        nextOptions,
+        draftModelOption,
+        profileOptionKey(draftModelOption, keyCounts),
+        { mode: "default" },
+      );
+    }
+    changeSpeculativeOptions(nextOptions);
+  };
   const configureDrafter = (path: string) => {
     const strategyOption = typeOptions[0];
     if (!strategyOption || !draftModelOption) return;
@@ -184,7 +207,19 @@ export function SpeculativeControls({
         title="Strategies"
         description="Only strategy names and flags reported by the selected runtime are available."
       />
-      {directDrafterSupported ? (
+      {capabilities.speculativeTypes.includes("draft-mtp") ? (
+        <div className="space-y-2 rounded-lg border p-4">
+          <Button variant="outline" onClick={configureEmbeddedMtp}>
+            Use MTP from main GGUF
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            {embeddedMtp
+              ? "MTP will use the main GGUF. You can save without a separate draft file."
+              : "If your main GGUF includes MTP heads, use them without a separate draft file."}
+          </p>
+        </div>
+      ) : null}
+      {directDrafterSupported && (!embeddedMtp || compatibleDrafters.length > 0) ? (
         <div className="rounded-lg border border-primary/35 bg-primary/5 p-4">
           <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
             <div>

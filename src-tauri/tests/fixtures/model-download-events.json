@@ -1,0 +1,7 @@
+[
+  { "type": "started", "totalFiles": 1, "totalBytes": 1000000 },
+  { "type": "fileStarted", "path": "coder-q4.gguf", "index": 1, "totalFiles": 1 },
+  { "type": "progress", "downloadedBytes": 250000, "totalBytes": 1000000, "fileDownloadedBytes": 250000, "fileSizeBytes": 1000000 },
+  { "type": "progress", "downloadedBytes": 750000, "totalBytes": 1000000, "fileDownloadedBytes": 750000, "fileSizeBytes": 1000000 },
+  { "type": "finished", "totalFiles": 1, "totalBytes": 1000000 }
+]
